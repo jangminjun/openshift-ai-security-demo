@@ -1,0 +1,17 @@
+# EvalHub with only the two garak providers mounted. sqlite keeps the demo
+# self-contained; job history is lost when the pod restarts. Namespace comes
+# from 'oc apply -n'.
+apiVersion: trustyai.opendatahub.io/v1
+kind: EvalHub
+metadata:
+  name: evalhub
+spec:
+  replicas: 1
+  # single = serve only this namespace; the default (multi) expects tenant
+  # namespaces labelled for cross-namespace propagation.
+  tenancy: single
+  database:
+    type: sqlite
+  providers:
+  - garak
+  - garak-kfp

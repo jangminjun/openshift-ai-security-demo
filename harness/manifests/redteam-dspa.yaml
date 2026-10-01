@@ -1,0 +1,20 @@
+# Pipeline server for the garak-kfp provider. Uses the DSPA's built-in MinIO
+# and MariaDB, which are fine for a demo but not for anything that has to keep
+# its data. Namespace comes from 'oc apply -n'.
+apiVersion: datasciencepipelinesapplications.opendatahub.io/v1
+kind: DataSciencePipelinesApplication
+metadata:
+  name: dspa
+spec:
+  dspVersion: v2
+  apiServer:
+    enableSamplePipeline: false
+  objectStorage:
+    disableHealthCheck: false
+    enableExternalRoute: false
+    minio:
+      deploy: true
+      image: quay.io/opendatahub/minio:RELEASE.2019-08-14T20-37-41Z-license-compliance
+  database:
+    mariaDB:
+      deploy: true

@@ -1,0 +1,31 @@
+# Fallback for when the Dashboard's "Create custom role" step was skipped.
+# Verbatim copy of what the "Workbench maintainer" template created on
+# RHOAI 3.5.1. Namespace comes from 'oc apply -n'.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: workbench-maintainer
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: workbench-maintainer-custom
+    openshift.io/description: A set of rules that grants users to act as the admin of the workbench component.
+rules:
+- apiGroups: [kubeflow.org]
+  resources: [notebooks]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [persistentvolumeclaims, secrets, configmaps]
+  verbs: [get, list, watch, create, update, patch, delete]
+- apiGroups: [""]
+  resources: [namespaces, persistentvolumeclaims/status, pods, events]
+  verbs: [get, watch, list]
+- apiGroups: [apps]
+  resources: [statefulsets]
+  verbs: [get, watch, list]
+- apiGroups: [image.openshift.io]
+  resources: [imagestreams]
+  verbs: [get, watch, list]
+- apiGroups: [infrastructure.opendatahub.io]
+  resources: [hardwareprofiles]
+  verbs: [get, watch, list]

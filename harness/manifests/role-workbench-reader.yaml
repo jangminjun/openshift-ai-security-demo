@@ -1,0 +1,33 @@
+# Fallback for when the Dashboard's "Create custom role" step was skipped.
+# This is the workbench-maintainer resource set cut down to read-only verbs
+# (and without secrets) -- it was NOT captured from the UI's "Workbench reader"
+# template, so the wizard's version may differ slightly.
+# Namespace comes from 'oc apply -n'.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: workbench-reader
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: workbench-reader-custom
+    openshift.io/description: A set of rules that grants users to view the workbench component without modification permissions.
+rules:
+- apiGroups: [kubeflow.org]
+  resources: [notebooks]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [persistentvolumeclaims, configmaps]
+  verbs: [get, list, watch]
+- apiGroups: [""]
+  resources: [namespaces, persistentvolumeclaims/status, pods, events]
+  verbs: [get, watch, list]
+- apiGroups: [apps]
+  resources: [statefulsets]
+  verbs: [get, watch, list]
+- apiGroups: [image.openshift.io]
+  resources: [imagestreams]
+  verbs: [get, watch, list]
+- apiGroups: [infrastructure.opendatahub.io]
+  resources: [hardwareprofiles]
+  verbs: [get, watch, list]
