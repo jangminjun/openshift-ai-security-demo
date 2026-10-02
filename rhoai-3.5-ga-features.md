@@ -57,7 +57,7 @@
 | 설명 / 주요 내용 | garak 스캐너 기반 적대적 공격 취약성 스캐닝을 검증 파이프라인에 통합하고 스코어 공개 |
 | 데모 시나리오 | 1) Red Hat AI 모델 카탈로그 접속 → 2) 모델 스펙 내 garak 스캔 결과 확인 → 3) Prompt Injection 등 보안 항목 정량 점수 검토 |
 | 시연 문서 | [scenarios/04-validated-model-garak-scanning.md](scenarios/04-validated-model-garak-scanning.md) |
-| 확인 상태 | 카탈로그 데이터를 API로 확인(133개 모델 중 25개에 점수). 화면은 아직 확인하지 않음 |
+| 확인 상태 | 확인됨 — AI hub → Models → 모델 상세 → Safety and security insights 탭에 garak 점수(백분율) 표시, API 값과 일치(25개 모델에 점수) |
 
 ### 5. Automated Red Teaming (자동화된 레드티밍)
 
@@ -77,7 +77,7 @@
 | 설명 / 주요 내용 | 모델 카탈로그 UI 내 전용 탭에서 프롬프트 주입, 탈옥, 유해 콘텐츠 방어 스캔 결과 표시 |
 | 데모 시나리오 | 1) 모델 카탈로그 진입 → 2) 특정 모델 선택 후 'Safety and Security Insights' 탭 클릭 → 3) 카테고리별 보안 스캔 스코어 시각적 확인 |
 | 시연 문서 | [scenarios/06-model-catalog-safety-security-tab.md](scenarios/06-model-catalog-safety-security-tab.md) |
-| 확인 상태 | 카탈로그 데이터를 API로 확인. 탭 화면은 아직 확인하지 않음 |
+| 확인 상태 | 확인됨 — Safety and security insights 탭에 카테고리별 점수(백분율) 표시, API 값과 일치. 통과/실패 표시는 없음 |
 
 ## 확인 환경
 

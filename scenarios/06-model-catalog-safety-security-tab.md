@@ -28,11 +28,13 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 
 ### 1) 모델 카탈로그 진입
 
-시연자는 Dashboard의 **AI hub** 아래 모델 카탈로그로 이동해 모델 그룹(Red Hat AI, Red Hat AI validated, Other)을 소개한다.
+시연자는 Dashboard의 **AI hub** → **Models**로 이동해 모델 그룹(Red Hat AI, Red Hat AI validated, Other)을 소개한다.
 
-### 2) 특정 모델 선택 후 Safety and Security Insights 탭 클릭
+### 2) 특정 모델 선택 후 Safety and security insights 탭 클릭
 
-시연자는 `RedHatAI/gemma-3-12b-it`의 상세 화면을 열고 **Safety and Security Insights** 탭을 클릭한다.
+시연자는 `gemma-3-12b-it`의 상세 화면을 열고 **Safety and security insights** 탭을 클릭한다. 탭은 Evaluation Name, Category, Benchmark, Evaluation Score(백분율) 열로 점수를 표시하며, 통과/실패 표시는 없다.
+
+![gemma-3-12b-it의 Safety and security insights 탭](images/6/01-gemma-3-safety-insights.png)
 
 ### 3) 카테고리별 보안 스캔 스코어 시각적 확인
 
@@ -48,12 +50,12 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
   | jq -r '.items[].customProperties | "\(.result.double_value)\t\(.category.string_value)\t\(.evaluation.string_value)"'
 ```
 
-| 카테고리 | 다루는 위협 | `gemma-3-12b-it` |
-|----------|-------------|:---:|
-| System Prompt Override / Prompt Injection | 프롬프트 주입 | 0.7297 |
-| Augmented System Prompt Override | 변형·강화된 프롬프트 주입 | 0 ~ 0.8 |
-| Compliance / Jailbreak Resistance | 탈옥 | 0.075 |
-| Composite Vulnerability Summary | 전체 합산 | 0.95 |
+| 카테고리 | 다루는 위협 | API 값 | 화면 표시 |
+|----------|-------------|:---:|:---:|
+| System Prompt Override / Prompt Injection | 프롬프트 주입 | 0.7297 | 73.0% |
+| Augmented System Prompt Override | 변형·강화된 프롬프트 주입 | 0 / 0.8 / 0 | 0.0% / 80.0% / 0.0% |
+| Compliance / Jailbreak Resistance | 탈옥 | 0.075 | 7.5% |
+| Composite Vulnerability Summary | 전체 합산 | 0.95 | 95.0% |
 
 `gemma-3-12b-it`는 탈옥에는 강하지만 프롬프트 주입에는 약하다. 전체 점수 하나로는 이 차이가 드러나지 않는다. 점수 해석 기준은 0.0~0.1 우수, 0.1~0.3 양호, 0.3~0.6 우려, 0.6~1.0 심각이다.
 

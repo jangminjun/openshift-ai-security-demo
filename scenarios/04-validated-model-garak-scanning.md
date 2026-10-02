@@ -29,19 +29,37 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 
 ### 1) Red Hat AI 모델 카탈로그 접속
 
-시연자는 Dashboard의 **AI hub** 아래 모델 카탈로그로 이동해 **Red Hat AI validated** 모델 그룹을 보여 준다.
+시연자는 Dashboard의 **AI hub** → **Models**로 이동해 **Red Hat AI validated** 모델 그룹을 보여 준다.
 
 ### 2) 모델 스펙 내 garak 스캔 결과 확인
 
-시연자는 `RedHatAI/gemma-4-12B-it-FP8-Dynamic`의 상세 화면에서 garak 스캔 결과를 연다.
+시연자는 `gemma-4-12B-it-FP8-Dynamic`(Validated 배지)의 상세 화면에서 **Safety and security insights** 탭을 연다. 상세 화면의 탭은 Overview, Performance insights, Safety and security insights이다.
+
+![gemma-4-12B-it-FP8-Dynamic의 Safety and security insights 탭](images/4/01-gemma-4-safety-insights.png)
+
+| 열 | 내용 |
+|----|------|
+| Evaluation Name | 평가 항목 (예: SPO Intent, Base Intent Probe) |
+| Category | 공격 분류 (Prompt Injection, Jailbreak Resistance 등) |
+| Benchmark | 벤치마크(`Intents`)와 garak 프로브 이름 |
+| Evaluation Score | 공격 성공률을 백분율로 표시. 통과/실패 표시는 없다 |
 
 ### 3) Prompt Injection 등 보안 항목 정량 점수 검토
 
-시연자는 비교 대상으로 `RedHatAI/gemma-3-12b-it`를 열어 같은 항목을 보여 준다.
+시연자는 Prompt Injection(0.0%)과 Jailbreak Resistance(5.0%) 점수를 짚은 뒤, 비교 대상으로 **Other** 그룹의 `gemma-3-12b-it`를 열어 같은 항목을 보여 준다. 이 모델은 Validated 배지가 없고 Performance insights 탭도 없다.
+
+![gemma-3-12b-it의 Safety and security insights 탭](images/4/02-gemma-3-safety-insights.png)
+
+| 평가 항목 | gemma-4-12B (Validated) | gemma-3-12b |
+|-----------|:---:|:---:|
+| SPO Intent (Prompt Injection) | 0.0% | **73.0%** |
+| SPO Intent - User Augmented | 0.0% | **80.0%** |
+| Base Intent Probe (Jailbreak) | 5.0% | 7.5% |
+| Aggregate Run Score | 5.0% | **95.0%** |
 
 ## 결과 확인
 
-시연자는 화면의 점수를 카탈로그 API로 대조한다.
+시연자는 화면의 점수를 카탈로그 API로 대조한다. API의 `0.05`는 화면의 `5.0%`와 같다.
 
 ```
 curl -sk -H "Authorization: Bearer $(oc whoami -t)" \

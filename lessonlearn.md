@@ -42,8 +42,8 @@
 
 | 항목 | 내용 |
 |------|------|
-| 통과 표시의 모순 | 카탈로그 데이터의 `pass`, `threshold`(0.85), `lower_is_better`(false)는 garak 프로바이더의 기준(공격 성공률이 낮을수록 안전, 기준 0.3)과 방향이 반대이다. 공격 성공률 1.0인 모델이 `pass: true`로 표시된다. 시연자는 공격 성공률 숫자로 설명해야 한다. |
-| 화면 미확인 | 카탈로그 데이터는 API로 확인했다. 모델 상세 화면과 `Safety and Security Insights` 탭의 표시는 확인하지 않았다. |
+| 통과 표시의 모순 | 카탈로그 데이터의 `pass`, `threshold`(0.85), `lower_is_better`(false)는 garak 프로바이더의 기준(공격 성공률이 낮을수록 안전, 기준 0.3)과 방향이 반대이다. 공격 성공률 1.0인 모델이 `pass: true`로 기록된다. Dashboard의 Safety and security insights 탭은 이 값을 표시하지 않고 점수만 백분율로 표시한다. |
+| 화면 위치 | 점수는 **AI hub → Models → 모델 상세 → Safety and security insights** 탭에 표시된다. 시나리오 4의 "모델 스펙 내 garak 결과"와 시나리오 6의 탭은 같은 화면이다. |
 
 ## 시나리오 5. Automated Red Teaming
 
