@@ -56,6 +56,8 @@
 #   scenario9-scan <label>  run the scenario 7 check through the gateway; results show up in scenario7-compare
 #   scenario9-stop        remove the guardrails (detectors, orchestrator)
 #
+#   scenario11-run        multilingual check: the intents benchmark with only the translation probe (zh, ~25 min)
+#
 #   scenario10-schedule [cron]  CronJob that re-runs the scenario 7 check on whatever model is deployed (default weekly)
 #   scenario10-trigger    run the scheduled check once now
 #   scenario10-history    security-check history over time, read from MLflow
@@ -459,6 +461,13 @@ cmd_scenario5_run() {
   id="$(redteam_submit "${1:-quick}" "${2:-garak-kfp}")"
   redteam_wait "$id" >/dev/null
   cmd_scenario5_status "$id"
+}
+
+cmd_scenario11_run() {
+  # Multilingual check: only the translation probe of the intents benchmark.
+  # The garak adapter in RHOAI 3.5.1 always sets the zh<->en language pair
+  # (it overwrites run.langproviders), so the target language is Chinese.
+  REDTEAM_PROBES=multilingual.TranslationIntent cmd_scenario5_run intents garak-kfp
 }
 
 cmd_scenario5_status() {
@@ -926,6 +935,7 @@ case "$cmd" in
   redteam-stop)      cmd_scenario5_stop ;;
   redteam-check)     cmd_scenario7_scan "$@" ;;
   redteam-compare)   cmd_scenario7_compare ;;
+  scenario11-run)    cmd_scenario11_run ;;
   scenario9-prep)    cmd_scenario9_prep ;;
   scenario9-demo)    cmd_scenario9_demo ;;
   scenario9-scan)    cmd_scenario9_scan "$@" ;;

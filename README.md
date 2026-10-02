@@ -1,6 +1,6 @@
 # OpenShift AI 보안 데모
 
-OpenShift AI(RHOAI)의 보안 관련 GA 기능 6가지를 시연하는 데모 시나리오 모음입니다. 두 영역으로 나뉘며, 기능을 실제 점검 업무와 운영에 적용하는 확장 시나리오 4개가 더 있습니다.
+OpenShift AI(RHOAI)의 보안 관련 GA 기능 6가지를 시연하는 데모 시나리오 모음입니다. 두 영역으로 나뉘며, 기능을 실제 점검 업무와 운영에 적용하는 확장 시나리오 5개가 더 있습니다.
 
 - **API 및 운영 관리 > 보안/권한** (시나리오 1~3): 누가 무엇을 할 수 있는지, 자격 증명과 운영 설정을 어떻게 다루는지
 - **평가 및 보안 > 보안/자산** (시나리오 4~6): 모델 자체가 공격에 얼마나 안전한지
@@ -33,6 +33,7 @@ GA 기능(시나리오 1~6)만 따로 정리한 목록은 [rhoai-3.5-ga-features
 | 8 | 용도별 점검 프로필 | 코딩 어시스턴트 / 고객 상담 챗봇 / RAG·에이전트에 맞춘 garak 시험지와 오탐 거르기 | CLI + 리포트 | [08-use-case-profiles.md](scenarios/08-use-case-profiles.md) |
 | 9 | 가드레일 적용 전후 비교 | TrustyAI Guardrails로 방어막을 씌우고 같은 점검으로 개선 효과를 숫자로 증명 | CLI + 리포트 | [09-guardrails-before-after.md](scenarios/09-guardrails-before-after.md) |
 | 10 | 점검 이력 관리와 정기 점검 | 점검 결과를 MLflow에 영구 기록하고 CronJob으로 주기적 재점검 | CLI + MLflow | [10-security-check-history.md](scenarios/10-security-check-history.md) |
+| 11 | 멀티랭귀지 안전성 평가 | 영어로 거절된 공격을 다른 언어(중국어)로 다시 시도해 언어 간 방어 격차 점검 | CLI + 리포트 | [11-multilingual-safety.md](scenarios/11-multilingual-safety.md) |
 
 모든 기능의 지원 단계는 GA입니다.
 
@@ -151,6 +152,7 @@ cp local.env.example local.env   # OCP_API_URL / OCP_USER / OCP_PASSWORD 입력 
 | `scenario8-scan <이름> <HF 모델 ID>` / `scenario8-compare` | 코딩·챗봇·RAG 프로필 3종 동시 점검 / 프로필별 비교표 |
 | `scenario9-prep` / `-demo` / `-scan <이름>` / `-stop` | 탐지 모델 2개와 가드레일 게이트웨이 배포 / 공격 직접 비교 / 가드레일 경유 점검(결과는 `scenario7-compare`에 표시) / 제거 |
 | `scenario10-schedule [cron]` / `-trigger` / `-history` / `-unschedule` | 정기 점검 CronJob 등록 / 즉시 1회 실행 / MLflow 이력 조회 / 제거 |
+| `scenario11-run` | 번역 프로브만 지정한 `intents` 평가 실행 (중국어, 약 25분) |
 
 프로젝트 이름, DSC 이름 등 기본값은 [harness/config.env](harness/config.env)에 있고 환경 변수로 덮어쓸 수 있습니다.
 
@@ -164,9 +166,10 @@ RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다.
 | 2 | 확인됨 — Existing secret 화면, 키별 참조, 워크벤치 안 환경 변수 주입 |
 | 3 | 확인됨 — DSC 패치, ConfigMap 반영, 모델 파드 자동 교체, 원복 |
 | 4 | 확인됨 — 카탈로그 화면의 Safety and security insights 탭, API 값과 일치 |
-| 5 | 확인됨 — 준비, `quick`·`intents` 파이프라인 실행, 리포트 생성까지. 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
+| 5 | 확인됨 — 파이프라인 실행 화면, 자동 주입, 리포트. 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
 | 6 | 확인됨 — Safety and security insights 탭의 카테고리별 점수, API 값과 일치 |
 | 7 | 확인됨 — 후보 2개(Qwen 1.5B, Granite 8B) 점검·비교 |
 | 8 | 확인됨 — 프로필 3종 점검, 실제 응답으로 오탐 확인 |
 | 9 | 확인됨 — 가드레일 구성, 차단 동작, 가드레일 경유 점검 |
 | 10 | 확인됨 — MLflow 기록, CronJob 제출, 이력 조회. MLflow 화면 경로는 확인하지 않음 |
+| 11 | 확인됨 — 번역 프로브 실행, 중국어 1,092건, 리포트. 한국어 등 다른 언어는 RHOAI 3.5.1 어댑터에서 지원하지 않음 |

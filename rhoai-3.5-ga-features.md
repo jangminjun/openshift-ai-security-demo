@@ -67,7 +67,7 @@
 | 설명 / 주요 내용 | garak 기반 멀티랭귀지/멀티클래스 안전성 평가를 공극(Air-gapped) 및 KFP 파이프라인 지원 |
 | 데모 시나리오 | 1) Automated Red Teaming 파이프라인 실행 → 2) 다국어 번역 및 적대적 프롬프트 자동 주입 → 3) 안전성 침해 요인 리포트 생성 |
 | 시연 문서 | [scenarios/05-automated-red-teaming.md](scenarios/05-automated-red-teaming.md) |
-| 확인 상태 | 확인됨 — 파이프라인 실행, 공격 프롬프트 합성, 중국어 번역 공격, 리포트 생성. 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
+| 확인 상태 | 확인됨 — 파이프라인 실행(Dashboard Runs 화면), 공격 프롬프트 합성·단계적 주입, 리포트 생성. 다국어 번역 평가는 [시나리오 11](scenarios/11-multilingual-safety.md)에서 확인(중국어만 지원). 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
 
 ### 6. Red Hat AI 모델 카탈로그 Safety & Security 탭
 

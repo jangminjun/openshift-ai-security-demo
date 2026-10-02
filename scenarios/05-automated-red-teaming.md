@@ -18,7 +18,7 @@
 | 벤치마크 | 내용 |
 |----------|------|
 | `quick` | 단일 프로브(DAN 탈옥) 스모크 테스트 |
-| `intents` | 공격 프롬프트 합성과 다국어 번역을 포함한 문맥 인지형 스캔 |
+| `intents` | 공격 프롬프트 합성과 다국어 번역을 포함한 문맥 인지형 스캔 (다국어 평가는 시나리오 11) |
 | `owasp_llm_top10`, `avid`, `avid_security`, `avid_ethics`, `avid_performance`, `quality`, `cwe` | 위험 분류별 스캔 |
 
 ## 사전 준비
@@ -75,14 +75,10 @@ oc get workflow -n redteam-demo
 | 1 | `base.IntentProbe` | 합성 프롬프트를 그대로 전송 |
 | 2 | `spo.SPOIntent` | 시스템 프롬프트 무시 유도를 덧붙임 |
 | 3~5 | `spo.SPOIntent*Augmented` | 사용자·시스템 프롬프트를 변형해 강화 |
-| 6 | `multilingual.TranslationIntent` | 프롬프트를 다른 언어(기본 중국어)로 번역해 전송 |
+| 6 | `multilingual.TranslationIntent` | 탈옥 템플릿을 씌운 프롬프트를 중국어로 번역해 전송 |
 | 7 | `tap.TAPIntent` | 공격자 모델이 응답을 보며 프롬프트를 개선 |
 
-3. 시연자는 번역 단계만 따로 보여 주려면 프로브를 지정한다. 검증 환경에서 약 25분이 걸렸으므로 시연 전에 실행한다.
-
-```
-REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run intents garak-kfp
-```
+3. 대상 모델이 약하면 앞 단계에서 대부분의 프롬프트가 성공하므로, 번역 단계에는 시도할 프롬프트가 거의 남지 않는다. 다국어 번역 평가의 결과는 번역 프로브만 실행하는 [시나리오 11](11-multilingual-safety.md)에서 확인한다.
 
 ### 3) 안전성 침해 요인 리포트 생성
 
@@ -121,14 +117,6 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 
 ![레드티밍 리포트 프로브 상세 — Baseline과 SPO 단계](images/5/03-intents-report-probe-details.png)
 
-번역 프로브만 지정한 실행 결과: 번역 프로브가 보낸 1,092건은 모두 중국어였다.
-
-| 지표 | 공격 성공률 |
-|------|:---:|
-| `base.IntentProbe` (영어) | 0.3125 |
-| `multilingual.TranslationIntent` (중국어) | **0.8727** |
-| 전체 | 0.9125 |
-
 | 리포트 파일 | 내용 |
 |-------------|------|
 | `scan.intents.html` | 위험 분류별·프로브별 결과 차트 |
@@ -141,14 +129,14 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 - 평가자는 EvalHub와 garak-kfp 파이프라인으로 배포된 모델에 대한 레드티밍을 자동 실행했다.
 - 파이프라인은 위험 분류 체계에서 공격 프롬프트 80개를 합성하고, 공격 기법을 단계적으로 강화하며 주입했다.
 - 대상 모델은 합성 프롬프트를 그대로 보냈을 때 47.5%를 따랐고, 프롬프트 주입이 더해지자 공격 프롬프트 80개 중 79개(99%)가 성공했다.
-- 번역 프로브만 지정한 실행에서 공격 성공률은 영어 31%, 중국어 87%였다.
+- 이 실행에서는 앞 단계에서 79개가 성공해 번역 단계에 프롬프트 1개만 남았다. 다국어 평가 결과는 시나리오 11에 있다.
 - 평가 결과는 리포트(`scan.intents.html`, `scan.hitlog.jsonl`)로 저장되었으며, 리포트는 위험 분류별·단계별 결과를 차트로 제공한다.
 
 ## 운영 가이드
 
 - 평가자는 카탈로그에 점수가 없는 사내 모델·파인튜닝 모델도 같은 기준으로 평가한다.
 - 공격 프롬프트는 사람이 작성하지 않고 위험 분류 체계에서 자동으로 합성·변형·번역된다.
-- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(47.5% → 99%). 영어로 거절한 요청을 다른 언어로 통과시킬 수도 있다(31% → 87%).
+- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(47.5% → 99%).
 - 후반 단계의 점수 0은 견고함이 아니라 시도 대상이 남지 않았다는 뜻일 수 있다. 평가자는 리포트의 Model Behavior By Probe에서 단계별 시도 건수를 함께 확인한다.
 - 평가는 파이프라인으로 실행되므로 배포 전 안전성 게이트로 자동화할 수 있다.
 - 실행 중인 평가를 멈출 때는 EvalHub 작업과 파이프라인 실행을 함께 중지한다(`harness/harness.sh redteam-cancel <job-id>`).
