@@ -15,3 +15,10 @@ spec:
   providers:
   - garak
   - garak-kfp
+  # The operator already mounts the MLflow token, CA and workspace (= this
+  # namespace) but leaves the server address empty, so jobs submitted with an
+  # "experiment" are not tracked. Point it at the cluster's MLflow instance
+  # (scenario 10).
+  env:
+  - name: MLFLOW_TRACKING_URI
+    value: https://mlflow.redhat-ods-applications.svc:8443/mlflow

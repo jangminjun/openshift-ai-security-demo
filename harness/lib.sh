@@ -75,7 +75,20 @@ evalhub_api() {
 }
 
 redteam_model_url() {
-  printf 'http://%s-predictor.%s.svc.cluster.local/v1' "$REDTEAM_MODEL" "$REDTEAM_NAMESPACE"
+  # REDTEAM_TARGET_URL points scans at something in front of the model
+  # instead, e.g. the guardrails gateway in scenario 9.
+  printf '%s' "${REDTEAM_TARGET_URL:-http://${REDTEAM_MODEL}-predictor.${REDTEAM_NAMESPACE}.svc.cluster.local/v1}"
+}
+
+guardrails_url() {
+  # The gateway's "all" route: every detector on input and output.
+  printf 'http://guardrails-service.%s.svc.cluster.local:8090/all/v1' "$REDTEAM_NAMESPACE"
+}
+
+guardrails_scan_url() {
+  # Same route behind the refusal adapter (manifests/redteam-guardrails-shim.yaml),
+  # which is what garak has to talk to.
+  printf 'http://guardrails-refusal-shim.%s.svc.cluster.local:8080/all/v1' "$REDTEAM_NAMESPACE"
 }
 
 wait_until() {

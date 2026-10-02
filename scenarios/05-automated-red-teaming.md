@@ -212,6 +212,8 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 | `garak-scan` 단계가 `Connection refused`로 멈춤 | EvalHub가 모델 주소를 사이드카 주소(`localhost:8080`)로 바꿔 전달하는데 파이프라인 파드에는 사이드카가 없음 | 작업 파라미터에 `kfp_config.model_url`로 실제 주소 지정 |
 | 파이프라인은 성공했는데 작업이 `Unable to locate credentials`로 실패 | 어댑터가 리포트를 받아올 S3 자격 증명을 읽지 못함 | 모델 인증 Secret에 `k8s_url`, `k8s_sa_token`(빈 값)을 넣고, 서비스 계정에 S3 Secret 읽기 권한 부여 |
 | `sdg-generate` 단계 실패, `LLM Provider NOT provided` | 프롬프트 합성 라이브러리(litellm)가 모델 이름에 프로바이더 접두사를 요구 | SDG 모델 이름을 `openai/<모델명>`으로 지정 |
+| EvalHub에서 작업을 취소했는데 대상 모델에 계속 공격 요청이 들어옴 | EvalHub 취소는 작업 상태만 바꾸고, 이미 시작된 파이프라인 실행은 멈추지 않음 | `scenario5-cancel <job-id>`: EvalHub 작업 취소와 함께 해당 파이프라인 워크플로도 삭제 |
+| EvalHub 재시작 후 이전 점검 결과를 조회할 수 없음 | 기본 데이터베이스가 메모리 sqlite라 파드 재시작 시 기록이 사라짐 | 결과는 MLflow에 기록([시나리오 10](10-security-check-history.md)). harness는 점수를 로컬 기록에도 함께 저장 |
 
 ## 정리
 

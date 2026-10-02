@@ -1,0 +1,116 @@
+# Scenario 9: TrustyAI Guardrails in front of the red teaming target.
+# Two small detector models run on CPU next to the target, and a
+# GuardrailsOrchestrator in auto-config mode wires them to the target model
+# and exposes an OpenAI-compatible gateway. Runtime image/args are the
+# cluster's own guardrails-detector-huggingface-serving-template (RHOAI 3.5.1).
+# Namespace comes from 'oc apply -n'.
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: guardrails-detector-runtime
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: Hugging Face Detector ServingRuntime for KServe
+spec:
+  containers:
+  - name: kserve-container
+    image: registry.redhat.io/rhoai/odh-guardrails-detector-huggingface-runtime-rhel9@sha256:770e7d6c921a95eb535c2a237fed947b090fdabc5303c47cc91f8dbe66583dc9
+    command: [uvicorn, app:app]
+    args:
+    - --workers=1
+    - --host=0.0.0.0
+    - --port=8000
+    - --log-config=/common/log_conf.yaml
+    env:
+    - name: MODEL_DIR
+      value: /mnt/models
+    - name: HF_HOME
+      value: /tmp/hf_home
+    - name: DETECTOR_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    ports:
+    - containerPort: 8000
+      protocol: TCP
+  multiModel: false
+  supportedModelFormats:
+  - name: guardrails-detector-hf-runtime
+    autoSelect: true
+---
+# Flags prompt injection / jailbreak attempts in what the user sends.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: prompt-injection-detector
+  labels:
+    opendatahub.io/dashboard: "true"
+    # autoConfig picks up every InferenceService with this label as a detector.
+    trustyai/guardrails: "true"
+  annotations:
+    openshift.io/display-name: Prompt injection detector (deberta-v3)
+    serving.kserve.io/deploymentMode: Standard
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: guardrails-detector-hf-runtime
+      runtime: guardrails-detector-runtime
+      storageUri: hf://protectai/deberta-v3-base-prompt-injection-v2
+      # Every scanned prompt and response goes through this model on CPU; at
+      # a 2-core limit it was the bottleneck of a guarded scan. The request
+      # stays at 1 core: the sandbox workers have idle CPU but little
+      # unrequested capacity, and a 2-core request does not schedule.
+      resources:
+        requests:
+          cpu: "1"
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 4Gi
+---
+# Flags hate, abuse and profanity (HAP) in prompts and responses.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: hap-detector
+  labels:
+    opendatahub.io/dashboard: "true"
+    trustyai/guardrails: "true"
+  annotations:
+    openshift.io/display-name: HAP detector (granite-guardian-hap-38m)
+    serving.kserve.io/deploymentMode: Standard
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: guardrails-detector-hf-runtime
+      runtime: guardrails-detector-runtime
+      storageUri: hf://ibm-granite/granite-guardian-hap-38m
+      resources:
+        requests:
+          cpu: "1"
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+---
+apiVersion: trustyai.opendatahub.io/v1alpha1
+kind: GuardrailsOrchestrator
+metadata:
+  name: guardrails
+spec:
+  replicas: 1
+  autoConfig:
+    inferenceServiceToGuardrail: redteam-target
+  enableGuardrailsGateway: true
+  # The built-in (regex) detector sidecar crashes on RHOAI 3.5.1
+  # ("No module named 'regex'"), and since auto-config adds it to the "all"
+  # gateway route, every request on that route then fails with HTTP 500.
+  # The two model-based detectors above are all this scenario needs.
+  enableBuiltInDetectors: false

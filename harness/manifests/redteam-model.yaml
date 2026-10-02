@@ -1,5 +1,6 @@
-# Scan target for scenario 5: a small open model behind vLLM, so the one
-# A10G in the sandbox is enough and a garak run finishes in demo time.
+# Scan target for scenarios 5 and 7: an open model behind vLLM on the
+# sandbox's single A10G. storageUri is the scenario 5 default; scenario7-scan
+# patches it to swap in other candidate models (up to ~8B in bf16).
 # Runtime image/command are the cluster's own vllm-cuda-runtime-template
 # (RHOAI 3.5.1). Namespace comes from 'oc apply -n'.
 apiVersion: serving.kserve.io/v1alpha1
@@ -44,11 +45,18 @@ metadata:
     opendatahub.io/dashboard: "true"
   annotations:
     openshift.io/display-name: Red teaming target (Qwen2.5-1.5B-Instruct)
-    serving.kserve.io/deploymentMode: RawDeployment
+    # RHOAI 3.5 calls RawDeployment "Standard"; using the old name makes
+    # every re-apply report a change.
+    serving.kserve.io/deploymentMode: Standard
 spec:
   predictor:
     minReplicas: 1
     maxReplicas: 1
+    # Only one GPU: a rolling update would start the new pod before the old
+    # one frees the GPU and wait forever. Recreate stops the old pod first,
+    # which is what lets scenario7-scan swap models in place.
+    deploymentStrategy:
+      type: Recreate
     model:
       modelFormat:
         name: vLLM
@@ -61,7 +69,7 @@ spec:
           nvidia.com/gpu: "1"
         limits:
           cpu: "3"
-          memory: 8Gi
+          memory: 12Gi
           nvidia.com/gpu: "1"
     nodeSelector:
       nvidia.com/gpu.present: "true"
