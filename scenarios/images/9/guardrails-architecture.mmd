@@ -7,8 +7,8 @@ flowchart LR
 
   subgraph GP["GuardrailsOrchestrator 파드"]
     direction TB
-    GW["게이트웨이 :8090<br/>/all/v1<br/>/passthrough/v1"]
-    OR["오케스트레이터 :8032"]
+    GW["게이트웨이 :8090<br/>(Tech Preview)<br/>/all/v1<br/>/passthrough/v1"]
+    OR["오케스트레이터 :8032<br/>(GA)"]
     GW --> OR
   end
 
