@@ -35,7 +35,7 @@
 | 설명 / 주요 내용 | 워크벤치 생성 시 External Secrets/Vault로 관리되는 프로젝트 내부의 기존 Secret을 환경변수로 연동 |
 | 데모 시나리오 | 1) 프로젝트 내 외부 도구로 생성된 Secret 존재 확인 → 2) 워크벤치 생성 UI에서 'Existing secret' 선택 → 3) 값 노출 없이 특정 키를 환경변수로 연결 |
 | 시연 문서 | [scenarios/02-existing-secret-workbench-env.md](scenarios/02-existing-secret-workbench-env.md) |
-| 확인 상태 | 사전 준비(Secret 생성)만 확인. 워크벤치 생성 화면은 아직 확인하지 않음 |
+| 확인 상태 | 확인됨 — Existing secret 화면, 키별 `secretKeyRef` 참조, Secret 사본 없음, 워크벤치 안 환경 변수 주입. 화면에서는 Secret 단위로 선택(키를 골라내는 단계 없음) |
 
 ### 3. DataScienceCluster API를 통한 OAuth Proxy 리소스 지정
 
@@ -45,7 +45,7 @@
 | 설명 / 주요 내용 | `spec.components.kserve.oauthProxy.resources` 설정을 통해 Unmanaged 전환 없이 OAuth sidecar 리소스 제어 |
 | 데모 시나리오 | 1) DataScienceCluster CR 편집 → 2) oauthProxy CPU/Memory request 및 limit 수정 → 3) Unmanaged 변경 없이 reconciled 상태 유지하며 파드 리소스 적용 확인 |
 | 시연 문서 | [scenarios/03-dsc-oauth-proxy-resources.md](scenarios/03-dsc-oauth-proxy-resources.md) |
-| 확인 상태 | 확인됨 — DSC 패치, ConfigMap 반영, `Managed` 유지, 원복. 패치 후 기존 모델 파드가 자동 재생성되는지는 확인하지 않음 |
+| 확인 상태 | 확인됨 — DSC 패치, `Managed` 유지, ConfigMap 반영(약 20초), 모델 파드 자동 교체로 새 리소스 적용(약 1분), 원복 |
 
 ## 평가 및 보안 > 보안/자산
 

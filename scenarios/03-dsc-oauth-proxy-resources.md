@@ -9,20 +9,27 @@
 
 ## 기능 설명
 
-`DataScienceCluster`의 `spec.components.kserve.oauthProxy.resources`에 CPU/Memory request와 limit을 지정해 OAuth sidecar의 리소스를 제어합니다. 컴포넌트를 `Unmanaged`로 전환하지 않아도 되므로 오퍼레이터의 reconcile이 계속 유지됩니다.
+인증을 켜고 모델을 배포하면 모델 파드에 인증 프록시 sidecar가 함께 뜹니다. 모든 요청은 이 프록시가 토큰을 확인한 뒤에야 모델로 넘어갑니다. 이 프록시의 CPU·메모리는 오퍼레이터가 정한 기본값(request `100m`/`64Mi`, limit `200m`/`128Mi`)으로 고정되어 있었습니다.
 
-## 전달 메시지
+| | 예전 | 이제 (3.5 GA) |
+|---|------|---------------|
+| 프록시 리소스 변경 방법 | 공식 설정 항목이 없음. KServe 설정 ConfigMap(`inferenceservice-config`)은 오퍼레이터가 관리하므로 직접 고쳐도 되돌려질 수 있음 | `DataScienceCluster`의 `spec.components.kserve.oauthProxy.resources`에 request·limit 지정 |
+| 확실하게 바꾸려면 | KServe 컴포넌트를 `Unmanaged`로 전환해 오퍼레이터 관리에서 빼야 함 | `Managed` 그대로 |
+| `Unmanaged` 전환 시 잃는 것 | 오퍼레이터의 자동 복구(reconcile)와 업그레이드 관리. 이후 KServe 설정은 사람이 직접 책임져야 함 | 잃는 것 없음. 오퍼레이터가 값을 ConfigMap에 반영하고 계속 관리함 |
+| 설정 위치 | 직접 고친 ConfigMap (변경 이력 추적이 어려움) | DSC 한 곳에 선언 (GitOps로 관리하기 쉬움) |
 
-- 이전에는 sidecar 리소스를 바꾸려면 컴포넌트를 `Unmanaged`로 돌려야 했고, 그 순간부터 업그레이드와 자동 복구를 포기해야 했습니다.
-- 이제 지원되는 API 필드로 선언하므로 오퍼레이터 관리 상태를 유지한 채 튜닝할 수 있습니다.
-- 설정이 DSC CR 한 곳에 있어 GitOps로 관리하기 쉽습니다.
+트래픽이 많아 프록시가 병목이 되거나 메모리 부족으로 재시작될 때, 또는 모델이 많아 프록시 자원이 낭비될 때, 지원 범위를 벗어나지 않고 프록시 자원을 조정할 수 있게 된 것이 핵심입니다.
 
 ## 사전 준비
 
 - `cluster-admin` 권한
-- (선택) 토큰 인증이 켜진 모델 배포 1개. 문서에서는 `security-demo` 프로젝트의 `demo-model`을 가정합니다.
+- 프록시가 붙은 모델 파드 1개 — `scenario3-prep`이 `security-demo` 프로젝트에 CPU로 도는 작은 sklearn 모델 `demo-model`을 배포합니다(GPU 불필요, [harness/manifests/demo-model.yaml](../harness/manifests/demo-model.yaml)).
 
-모델 배포가 없어도 시연할 수 있습니다. 오퍼레이터가 DSC 값을 `redhat-ods-applications` 네임스페이스의 `inferenceservice-config` ConfigMap(`oauthProxy` 키)에 반영하고, KServe가 파드를 만들 때 이 값을 sidecar 리소스로 씁니다. ConfigMap 변화만으로 reconcile을 보여줄 수 있고, 실제 파드까지 보여주려면 모델 배포가 필요합니다.
+```
+./harness/harness.sh scenario3-prep
+```
+
+RHOAI 3.5에서는 인증 설정을 따로 하지 않아도 모든 모델 파드에 인증 프록시 컨테이너 `kube-rbac-proxy`가 붙습니다. 오퍼레이터가 DSC 값을 `redhat-ods-applications` 네임스페이스의 `inferenceservice-config` ConfigMap(`oauthProxy` 키)에 반영하고, KServe가 모델 파드를 만들 때 이 값을 프록시 리소스로 씁니다.
 
 RHOAI 3.5.1 기본값 (실측):
 
@@ -30,7 +37,7 @@ RHOAI 3.5.1 기본값 (실측):
 |------|--------|
 | cpuRequest / cpuLimit | `100m` / `200m` |
 | memoryRequest / memoryLimit | `64Mi` / `128Mi` |
-| sidecar 이미지 | `odh-kube-rbac-proxy-rhel9` |
+| 프록시 컨테이너 / 이미지 | `kube-rbac-proxy` / `odh-kube-rbac-proxy-rhel9` |
 
 harness 명령: `scenario3-prep` → `scenario3-apply` → `scenario3-verify` → `scenario3-stop`
 
@@ -56,11 +63,18 @@ oc get datasciencecluster default-dsc -o jsonpath="{.spec.components.kserve}"
 oc get datasciencecluster default-dsc -o jsonpath="{.spec.components.kserve.managementState}"
 ```
 
-변경 전 sidecar 리소스도 기록해 둡니다.
+변경 전 모델 파드의 프록시 리소스도 기록해 둡니다.
 
 ```
 oc get pod -n security-demo -l serving.kserve.io/inferenceservice=demo-model -o jsonpath="{range .items[*].spec.containers[*]}{.name}{' => '}{.resources}{'\n'}{end}"
 ```
+
+```
+kserve-container => {"limits":{"cpu":"1","memory":"1Gi"},"requests":{"cpu":"200m","memory":"512Mi"}}
+kube-rbac-proxy => {"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}
+```
+
+`kube-rbac-proxy`가 기본값인 것을 확인합니다.
 
 ### 2) oauthProxy CPU/Memory request 및 limit 수정
 
@@ -111,26 +125,38 @@ oc get configmap inferenceservice-config -n redhat-ods-applications -o jsonpath=
 
 `cpuRequest: 200m`, `cpuLimit: 500m`, `memoryRequest: 128Mi`, `memoryLimit: 256Mi`로 바뀌어 있으면 성공입니다.
 
-모델 배포가 있다면 파드의 sidecar 컨테이너에 새 리소스가 반영됐는지도 확인합니다.
+마지막으로 모델 파드의 프록시에 새 리소스가 반영됐는지 확인합니다. **별도 재시작 없이** KServe가 모델 파드를 새 값으로 다시 만듭니다.
 
 ```
+oc get pod -n security-demo -l serving.kserve.io/inferenceservice=demo-model -w
 oc get pod -n security-demo -l serving.kserve.io/inferenceservice=demo-model -o jsonpath="{range .items[*].spec.containers[*]}{.name}{' => '}{.resources}{'\n'}{end}"
 ```
 
-sidecar 컨테이너의 값이 1)에서 기록한 값에서 패치한 값(`200m`/`128Mi`, `500m`/`256Mi`)으로 바뀌어 있으면 성공입니다.
+RHOAI 3.5.1에서 실제로 관찰한 흐름입니다.
 
-기존 파드에 반영되지 않았다면 모델 배포를 재시작한 뒤 다시 확인합니다.
+| 시점 | 일어난 일 |
+|------|-----------|
+| 패치 직후 | DSC 패치 적용, `Managed` 유지 |
+| 약 20초 후 | ConfigMap(`inferenceservice-config`)에 새 값 반영 |
+| 약 1분 후 | 새 값을 가진 모델 파드가 새로 뜸 → 준비되자 기존 파드 종료 (중단 없이 교체) |
+| 결과 | `kube-rbac-proxy => {"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"200m","memory":"128Mi"}}` |
 
-```
-oc rollout restart deployment -n security-demo -l serving.kserve.io/inferenceservice=demo-model
-```
+`./harness/harness.sh scenario3-verify`가 관리 상태, DSC 상태, ConfigMap, 모델 파드의 리소스를 한 번에 보여줍니다.
+
+> 설명 포인트: DSC 한 줄을 바꾸자 오퍼레이터가 설정을 반영하고, 모델 파드까지 새 값으로 자동 교체됐습니다. 그동안 KServe는 계속 `Managed`였습니다.
 
 ## 정리 (원복)
 
-추가한 필드를 제거합니다. 약 30초 안에 ConfigMap이 기본값으로 돌아갑니다.
+추가한 필드를 제거합니다. 약 20초 뒤 ConfigMap이 기본값으로 돌아가고, 약 1분 뒤 모델 파드도 기본값(`100m`/`64Mi`, `200m`/`128Mi`)으로 다시 교체됩니다.
 
 ```
 ./harness/harness.sh scenario3-stop
+```
+
+시연용 모델까지 지우려면:
+
+```
+oc delete -n security-demo -f harness/manifests/demo-model.yaml
 ```
 
 직접 실행하려면 아래 내용을 `oauthproxy-remove.yaml`로 저장해 적용합니다.
@@ -148,16 +174,11 @@ oc patch datasciencecluster default-dsc --type merge --patch-file oauthproxy-rem
 
 ## 주의 사항
 
-- DSC는 클러스터 전역 리소스입니다. 변경은 OAuth sidecar를 쓰는 모든 모델 배포에 영향을 줍니다. 공유 클러스터에서는 시연 후 반드시 원복하세요.
+- DSC는 클러스터 전역 리소스입니다. 값을 바꾸거나 원복할 때마다 **클러스터의 모든 모델 파드가 다시 만들어집니다.** 이 환경에서도 다른 프로젝트의 GPU 모델 파드까지 함께 교체됐습니다. GPU가 한 장뿐이거나 배포 전략이 `Recreate`인 모델은 교체되는 동안 잠시 응답하지 않으므로, 공유 클러스터에서는 시연 시간을 미리 알리고 시연 후 반드시 원복하세요.
 - limit을 너무 낮게 잡으면 sidecar가 OOMKilled 되거나 인증 요청이 지연될 수 있습니다.
 
-## 리허설 시 확인할 점
+## 운영 가이드
 
-RHOAI 3.5.1에서 확인된 것:
-
-- `oauthProxy` 필드 존재, 패치 후 `Managed`/`Ready` 유지, ConfigMap 반영과 원복(각 약 30초)
-- 모델 파드의 sidecar 컨테이너 이름은 `kube-rbac-proxy`이고, 기본 리소스는 request `100m`/`64Mi`, limit `200m`/`128Mi`로 ConfigMap 기본값과 일치 ([시나리오 5](05-automated-red-teaming.md)의 `redteam-target` 모델 파드에서 확인)
-
-아직 확인하지 못한 것:
-
-- 패치 후 기존 파드가 자동으로 재생성되는지, 수동 재시작이 필요한지
+- 이전에는 sidecar 리소스를 바꾸려면 컴포넌트를 `Unmanaged`로 돌려야 했고, 그 순간부터 업그레이드와 자동 복구를 포기해야 했습니다.
+- 이제 지원되는 API 필드로 선언하므로 오퍼레이터 관리 상태를 유지한 채 튜닝할 수 있습니다.
+- 설정이 DSC CR 한 곳에 있어 GitOps로 관리하기 쉽습니다.

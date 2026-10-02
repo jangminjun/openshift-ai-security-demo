@@ -1,0 +1,78 @@
+# Scenario 3: a tiny CPU model, only so there is a model pod whose auth proxy
+# sidecar (kube-rbac-proxy) can be inspected. KServe adds the sidecar to every
+# predictor pod on RHOAI 3.5; nothing here asks for it explicitly.
+# Runtime image/env are the cluster's own mlserver-runtime-template
+# (RHOAI 3.5.1), with small requests because the sandbox workers have little
+# unrequested CPU. Namespace comes from 'oc apply -n'.
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: mlserver-runtime
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: MLServer ServingRuntime for KServe
+spec:
+  containers:
+  - name: kserve-container
+    image: registry.redhat.io/rhoai/odh-mlserver-rhel9@sha256:3b1b45ae7b7a347b00ea6dc2e2154064c3ed948ffaff84e33e9d0282bf403361
+    env:
+    - name: MLSERVER_MODEL_IMPLEMENTATION
+      value: "{{.Labels.modelClass}}"
+    - name: MLSERVER_HTTP_PORT
+      value: "8080"
+    - name: MLSERVER_MODELS_DIR
+      value: /mnt/models
+    # Not in the template; without them MLServer starts but cannot load the
+    # model ("Couldn't load model ''") and the container restarts forever.
+    - name: MLSERVER_MODEL_NAME
+      value: "{{.Name}}"
+    - name: MLSERVER_MODEL_URI
+      value: /mnt/models
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  multiModel: false
+  protocolVersions:
+  - v2
+  supportedModelFormats:
+  - name: sklearn
+    version: "1"
+    autoSelect: true
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: demo-model
+  labels:
+    opendatahub.io/dashboard: "true"
+    # MLServer picks its implementation from this label.
+    modelClass: mlserver_sklearn.SKLearnModel
+  annotations:
+    openshift.io/display-name: Scenario 3 demo model (sklearn iris)
+    serving.kserve.io/deploymentMode: Standard
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: sklearn
+        version: "1"
+      runtime: mlserver-runtime
+      protocolVersion: v2
+      storageUri: gs://kfserving-examples/models/sklearn/1.0/model
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi

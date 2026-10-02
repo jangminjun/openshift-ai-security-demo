@@ -26,7 +26,7 @@
 #   scenario2-verify      show the workbench references the Secret instead of copying values
 #   scenario2-stop        delete the workbench and the Secret
 #
-#   scenario3-prep        confirm the DSC oauthProxy field exists, show the before state
+#   scenario3-prep        confirm the DSC oauthProxy field exists, deploy a small CPU demo model, show the before state
 #   scenario3-apply       patch oauthProxy resources into the DataScienceCluster
 #   scenario3-verify      show managementState, DSC conditions, and the applied resources
 #   scenario3-stop        remove the oauthProxy override (back to operator defaults)
@@ -198,6 +198,15 @@ cmd_scenario3_prep() {
   require_login
   oc explain datasciencecluster.spec.components.kserve 2>/dev/null | grep -q oauthProxy \
     || err "DataScienceCluster has no spec.components.kserve.oauthProxy field on this RHOAI version."
+  # A small CPU model, so there is a model pod whose proxy sidecar shows the
+  # change; KServe adds the sidecar on its own.
+  DEMO_NAMESPACE="$ISVC_NAMESPACE" ensure_project
+  oc apply -n "$ISVC_NAMESPACE" -f ./manifests/demo-model.yaml
+  wait_until "${ISVC_NAME} to be ready" 60 10 \
+    sh -c "[ \"\$(oc get inferenceservice $ISVC_NAME -n $ISVC_NAMESPACE -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}')\" = True ]"
+  log "Model pod containers (before):"
+  oc get pod -n "$ISVC_NAMESPACE" -l "serving.kserve.io/inferenceservice=${ISVC_NAME}" \
+    -o jsonpath='{range .items[*].spec.containers[*]}{.name}{" => "}{.resources}{"\n"}{end}'
   log "kserve component spec (before):"
   oc get datasciencecluster "$DSC_NAME" -o jsonpath='{.spec.components.kserve}'
   echo
