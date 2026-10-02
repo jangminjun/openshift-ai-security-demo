@@ -26,8 +26,15 @@
 
 관리자는 레드티밍 환경(InferenceService, DataSciencePipelinesApplication, EvalHub)을 `redteam-demo` 프로젝트에 만든다. 일부 탐지기는 파이프라인 파드가 Hugging Face에서 내려받으므로 외부 접속이 필요하다.
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+oc get inferenceservice,evalhub,dspa -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 oc get inferenceservice,evalhub,dspa -n redteam-demo
 ```
 
@@ -37,23 +44,42 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 평가자는 대상 모델을 지정해 세 프로필을 동시에 점검한다. 결과는 `harness/reports/scenario8.tsv`와 MLflow 실험 `use-case-profiles`에 기록된다.
 
-```
+```bash
 ./harness/harness.sh scenario8-scan granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
 ./harness/harness.sh scenario8-scan qwen2.5-1.5b Qwen/Qwen2.5-1.5B-Instruct
 ```
 
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario8-scan granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
+.\harness\harness.cmd scenario8-scan qwen2.5-1.5b Qwen/Qwen2.5-1.5B-Instruct
+```
+
 ### 2) 프로필별 비교
 
-```
+```bash
 ./harness/harness.sh scenario8-compare
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario8-compare
 ```
 
 ### 3) 실제 응답으로 오탐 거르기
 
 평가자는 점수가 높거나 판정에 영향을 주는 항목의 실제 응답을 `scan.hitlog.jsonl`에서 확인한다.
 
-```
+```bash
 ./harness/harness.sh redteam-report <job-id>
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-report <job-id>
 ```
 
 ## 결과 확인

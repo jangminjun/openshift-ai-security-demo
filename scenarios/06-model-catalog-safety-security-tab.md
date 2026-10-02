@@ -70,4 +70,4 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 - 보안 스캔 결과는 별도 문서가 아니라 모델을 선택하는 화면 안에 있다.
 - 카테고리별 점수는 모델이 어떤 공격에 약한지를 보여 준다.
 - 사용자는 성능·정확도·보안을 같은 화면에서 비교한다.
-- 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>`
+- 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>` (Windows: `.\harness\harness.cmd <명령>`)

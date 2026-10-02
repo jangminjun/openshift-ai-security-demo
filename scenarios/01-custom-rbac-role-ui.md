@@ -123,4 +123,4 @@ oc auth can-i create notebooks.kubeflow.org -n security-demo --as=wb-reader
 - YAML을 모르는 사용자는 폼으로 작성하고, YAML을 아는 사용자는 프리뷰로 검증한다.
 - 결과물은 표준 Kubernetes `Role`이므로 기존 감사·GitOps 체계와 호환된다.
 - 실제 제한은 Kubernetes RBAC가 강제한다. 사용자가 `oc`로 직접 접근해도 결과는 같다.
-- 자동화: `harness/harness.sh scenario1-prep | scenario1-bind | scenario1-verify | scenario1-stop`
+- 자동화: `harness/harness.sh scenario1-prep | scenario1-bind | scenario1-verify | scenario1-stop` (Windows: `.\harness\harness.cmd <명령>`)

@@ -33,8 +33,15 @@
 | Secret `redteam-s3`, `redteam-model-auth` | 리포트 저장용 S3 연결 정보, EvalHub 사이드카 접근 설정 |
 | RoleBinding | EvalHub 작업 서비스 계정에 파이프라인 API와 S3 Secret 읽기 권한 부여 |
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+oc get inferenceservice,evalhub,dspa -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 oc get inferenceservice,evalhub,dspa -n redteam-demo
 ```
 
@@ -46,8 +53,15 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 시연자는 `intents` 벤치마크를 파이프라인 모드로 실행하고, Dashboard의 **Develop & train** → **Pipelines** → **Runs**(프로젝트 `Red Teaming Demo`)에서 run의 진행을 보여 준다. run 이름은 `evalhub-garak-<EvalHub job ID>` 형식이다.
 
-```
+```bash
 ./harness/harness.sh scenario5-run intents garak-kfp
+oc get workflow -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario5-run intents garak-kfp
 oc get workflow -n redteam-demo
 ```
 
@@ -84,14 +98,26 @@ oc get workflow -n redteam-demo
 
 시연자는 리포트를 내려받아 `scan.intents.html`(위험 분류별·프로브별 차트)과 `scan.hitlog.jsonl`(공격에 성공한 프롬프트와 응답)을 연다.
 
-```
+```bash
 ./harness/harness.sh redteam-report <job-id>
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-report <job-id>
 ```
 
 ## 결과 확인
 
-```
+```bash
 ./harness/harness.sh redteam-status <job-id>
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-status <job-id>
 ```
 
 `intents` 실행 결과(검증 환경, 대상 Qwen2.5 1.5B, job `b303ef8e`):

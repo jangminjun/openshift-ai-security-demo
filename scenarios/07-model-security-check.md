@@ -29,8 +29,15 @@
 
 관리자는 레드티밍 환경(InferenceService, DataSciencePipelinesApplication, EvalHub)을 `redteam-demo` 프로젝트에 만든다.
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+oc get inferenceservice,evalhub,dspa -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 oc get inferenceservice,evalhub,dspa -n redteam-demo
 ```
 
@@ -47,25 +54,44 @@ GPU가 한 장이므로 평가자는 같은 InferenceService의 `storageUri`를 
 
 평가자는 후보마다 한 번씩 점검을 실행한다. 명령은 InferenceService의 모델 교체, 준비 대기, 점검 실행, 결과 기록을 수행한다.
 
-```
+```bash
 ./harness/harness.sh redteam-check qwen2.5-1.5b Qwen/Qwen2.5-1.5B-Instruct
 ./harness/harness.sh redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-check qwen2.5-1.5b Qwen/Qwen2.5-1.5B-Instruct
+.\harness\harness.cmd redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
 ```
 
 모델 교체는 1.5B 약 3분, 8B 약 7분이 걸리고, 점검은 후보당 약 3~5분이 걸린다. 시연에서는 점검을 미리 실행하고 비교부터 보여 준다.
 
 ### 2) 결과 비교
 
-```
+```bash
 ./harness/harness.sh redteam-compare
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-compare
 ```
 
 ### 3) 실제 응답 확인
 
 평가자는 점수가 높은 항목의 실제 응답을 리포트에서 확인한다.
 
-```
+```bash
 ./harness/harness.sh redteam-report <job-id>
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-report <job-id>
 ```
 
 ## 결과 확인

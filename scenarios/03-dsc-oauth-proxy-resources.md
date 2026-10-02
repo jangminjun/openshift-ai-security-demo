@@ -114,4 +114,4 @@ RHOAI 3.5.1에서 관찰한 결과는 다음과 같다.
 - 관리자는 모델이 많아 프록시 자원이 낭비될 때 프록시 자원을 줄인다.
 - 관리자는 지원 범위(`Managed`)를 벗어나지 않고 이 조정을 수행한다.
 - 설정은 클러스터 전역이므로 변경할 때마다 모든 모델 파드가 다시 만들어진다. 관리자는 변경 시점을 사전에 공지한다.
-- 자동화: `harness/harness.sh scenario3-prep | scenario3-apply | scenario3-verify | scenario3-stop`
+- 자동화: `harness/harness.sh scenario3-prep | scenario3-apply | scenario3-verify | scenario3-stop` (Windows: `.\harness\harness.cmd <명령>`)

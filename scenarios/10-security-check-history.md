@@ -17,8 +17,14 @@
 
 1. 관리자는 레드티밍 환경(InferenceService, DataSciencePipelinesApplication, EvalHub)을 `redteam-demo` 프로젝트에 만든다.
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 ```
 
 2. 관리자는 EvalHub에 MLflow 서버 주소가 설정되어 있는지 확인한다. RHOAI 운영자는 MLflow 토큰과 작업 공간을 설정하지만 서버 주소는 비워 두므로, `harness/manifests/redteam-evalhub.yaml`이 `spec.env`에 주소를 넣는다.
@@ -37,17 +43,30 @@ oc get deploy evalhub -n redteam-demo -o jsonpath="{range .spec.template.spec.co
 "experiment": {"name": "model-security-checks", "tags": [{"key": "model", "value": "granite-3.3-8b"}]}
 ```
 
-```
+```bash
 ./harness/harness.sh redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
 ```
 
 ### 2) 정기 점검 등록
 
 관리자는 CronJob을 등록한다. 기본 주기는 매주 월요일 02:00(UTC)이며 인자로 바꿀 수 있다(예: `"0 3 * * *"`).
 
-```
+```bash
 ./harness/harness.sh scenario10-schedule
 oc get cronjob,configmap,serviceaccount,rolebinding -n redteam-demo | grep -E 'redteam-sched'
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario10-schedule
+oc get cronjob,configmap,serviceaccount,rolebinding -n redteam-demo | Select-String redteam-sched
 ```
 
 | 리소스 | 내용 |
@@ -68,8 +87,14 @@ CronJob 파드는 점검을 제출만 하고 몇 초 안에 종료한다. 점검
 
 ## 결과 확인
 
-```
+```bash
 ./harness/harness.sh scenario10-history
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario10-history
 ```
 
 | 시각 (UTC) | 모델 | 탈옥 | 프롬프트 주입 | 간접 주입 | 역할극 유출 | 전체 | 실패 유형 |

@@ -11,8 +11,15 @@
 
 관리자는 `redteam-demo` 프로젝트에 대상 모델(InferenceService), 파이프라인 서버(DataSciencePipelinesApplication), EvalHub를 만든다.
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+oc get inferenceservice,evalhub,dspa -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 oc get inferenceservice,evalhub,dspa -n redteam-demo
 ```
 
@@ -24,8 +31,14 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 평가자는 `intents` 벤치마크에서 번역 프로브만 실행한다. 실행은 약 20~25분이 걸리므로 시연 전에 수행한다.
 
-```
+```bash
 ./harness/harness.sh scenario11-run
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario11-run
 ```
 
 명령은 EvalHub에 `probes: multilingual.TranslationIntent` 파라미터를 가진 평가 작업을 제출한다. 진행은 Dashboard의 **Develop & train** → **Pipelines** → **Runs**에서 확인한다.
@@ -36,8 +49,14 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 ### 3) 리포트 확인
 
-```
+```bash
 ./harness/harness.sh redteam-report <job-id>
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-report <job-id>
 ```
 
 평가자는 `harness/reports/<job-id>/scan.intents.html`을 연다.

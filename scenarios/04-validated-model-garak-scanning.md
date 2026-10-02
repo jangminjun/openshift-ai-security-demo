@@ -92,4 +92,4 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 - 사용자는 성능·정확도와 함께 공격 내성을 숫자로 비교해 모델을 선택한다.
 - 점수는 Red Hat이 같은 스캐너와 같은 기준으로 측정한 값이므로 모델 간 비교가 가능하다.
 - 같은 계열 모델도 세대에 따라 Prompt Injection 내성이 크게 다르다(gemma-4 0 대 gemma-3 0.73).
-- 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>`
+- 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>` (Windows: `.\harness\harness.cmd <명령>`)

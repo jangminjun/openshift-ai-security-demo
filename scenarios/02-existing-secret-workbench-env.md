@@ -116,4 +116,4 @@ oc get secret -n security-demo
 - 자격 증명의 원본은 Vault나 External Secrets에 두고, 워크벤치는 참조만 한다. 값은 복제되지 않는다.
 - 데이터 사이언티스트는 값을 보지 않고 Secret을 연결한다.
 - 원본 Secret이 로테이션되면 사용자는 워크벤치를 재시작해 새 값을 반영한다. 화면에도 이 안내가 표시된다.
-- 자동화: `harness/harness.sh scenario2-prep | scenario2-verify | scenario2-stop`
+- 자동화: `harness/harness.sh scenario2-prep | scenario2-verify | scenario2-stop` (Windows: `.\harness\harness.cmd <명령>`)

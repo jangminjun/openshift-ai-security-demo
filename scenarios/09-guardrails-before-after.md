@@ -23,14 +23,27 @@
 
 1. 관리자는 레드티밍 환경(InferenceService, DataSciencePipelinesApplication, EvalHub)을 `redteam-demo` 프로젝트에 만든다.
 
-```
+```bash
 ./harness/harness.sh redteam-prep
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-prep
 ```
 
 2. 관리자는 가드레일 구성을 배포한다. 매니페스트는 `harness/manifests/redteam-guardrails.yaml`과, 차단 응답을 거절 문장으로 바꾸는 점검용 어댑터 `harness/manifests/redteam-guardrails-shim.yaml`이다.
 
-```
+```bash
 ./harness/harness.sh scenario9-prep
+oc get inferenceservice,guardrailsorchestrator -n redteam-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario9-prep
 oc get inferenceservice,guardrailsorchestrator -n redteam-demo
 ```
 
@@ -40,25 +53,44 @@ oc get inferenceservice,guardrailsorchestrator -n redteam-demo
 
 시연자는 같은 질문을 대상 모델에 직접, 그리고 게이트웨이를 거쳐 보낸다.
 
-```
+```bash
 ./harness/harness.sh scenario9-demo
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario9-demo
 ```
 
 ### 2) 가드레일 적용 전 점검
 
 평가자는 표준 프로브 8종(탈옥, 프롬프트 주입, 간접 주입, 인코딩 우회, 악성코드, 역할극 정보 유출, 마크다운 데이터 유출, SQL 출력)으로 대상 모델을 점검한다.
 
-```
+```bash
 ./harness/harness.sh redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct
 ```
 
 ### 3) 가드레일 적용 후 점검
 
 평가자는 같은 시험지로 대상 주소만 게이트웨이로 바꿔 점검한다. 탐지 모델이 CPU에서 모든 요청을 검사하므로 약 20분이 걸린다. 시연 전에 실행한다.
 
-```
+```bash
 ./harness/harness.sh scenario9-scan granite-3.3-8b
 ./harness/harness.sh redteam-compare
+```
+
+Windows (PowerShell):
+
+```powershell
+.\harness\harness.cmd scenario9-scan granite-3.3-8b
+.\harness\harness.cmd redteam-compare
 ```
 
 ## 결과 확인
