@@ -1,0 +1,30 @@
+%% Source of 00-evalhub-architecture.png. Re-render:
+%% .\harness\render-diagram.ps1 scenarios\images\5\evalhub-architecture.mmd scenarios\images\5\00-evalhub-architecture.png
+flowchart LR
+  U["평가자<br/>harness · curl"] -->|"① 평가 요청"| R
+  DB["Dashboard<br/>Pipelines › Runs"] -.->|"run 조회"| API
+
+  subgraph EH["EvalHub 파드"]
+    direction TB
+    R["kube-rbac-proxy"] --> S["EvalHub 서버<br/>작업 · 상태 · 결과<br/>프로바이더: garak, garak-kfp"]
+  end
+
+  subgraph J["평가 Job 파드 (평가마다 생성)"]
+    direction TB
+    A["adapter<br/>(garak 어댑터)"]
+    SC["sidecar<br/>(상태 보고)"]
+  end
+
+  subgraph D["파이프라인 서버 (DSPA)"]
+    direction TB
+    API["Pipelines API"] --> W["Argo Workflow<br/>(garak 이미지)<br/>validate<br/>resolve-taxonomy<br/>sdg-generate<br/>prepare-prompts<br/>garak-scan<br/>write-kfp-outputs"]
+    W -->|"⑤ 리포트 저장"| M[("MinIO")]
+  end
+
+  T["대상 모델<br/>InferenceService<br/>kube-rbac-proxy + vLLM"]
+
+  S -->|"② Job 생성"| A
+  A -->|"③ 파이프라인 제출"| API
+  W -->|"④ 공격 · 응답 판정"| T
+  M -->|"⑥ 결과 읽기"| A
+  SC -.->|"⑦ 상태 · 지표"| S

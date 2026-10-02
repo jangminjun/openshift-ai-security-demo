@@ -15,6 +15,22 @@
 | 파이프라인 서버 (DataSciencePipelinesApplication) | `garak-kfp`가 파이프라인을 제출하는 대상 |
 | 스캔 대상 모델 (InferenceService) | OpenAI 호환 chat completions 엔드포인트 |
 
+EvalHub는 평가 작업을 관리하는 서비스이고, garak은 실제로 공격 프롬프트를 보내고 응답을 판정하는 스캔 엔진이다. EvalHub는 garak을 직접 실행하지 않고, 평가마다 garak 어댑터가 든 Job 파드를 만들어 실행을 맡긴다.
+
+![EvalHub와 garak의 구성](images/5/00-evalhub-architecture.png)
+
+| 순서 | 동작 |
+|:---:|------|
+| ① | 평가자가 EvalHub REST API(`/api/v1/evaluations/jobs`)에 벤치마크와 프로바이더를 지정해 평가를 요청한다 |
+| ② | EvalHub가 평가 Job 파드를 만든다. 파드에는 garak 어댑터(`adapter`)와 상태 보고용 `sidecar`가 들어 있다 |
+| ③ | `garak-kfp` 프로바이더의 어댑터는 파이프라인 서버에 garak 파이프라인을 제출한다. `garak` 프로바이더의 어댑터는 파이프라인 없이 파드 안에서 garak을 직접 실행한다 |
+| ④ | 파이프라인 단계(garak 이미지)가 공격 프롬프트를 합성·변형해 대상 모델에 보내고 응답을 판정한다 |
+| ⑤ | 파이프라인이 리포트를 파이프라인 서버의 MinIO에 저장한다 |
+| ⑥ | 어댑터가 MinIO에서 결과를 읽는다. 평가 요청에 `experiment`가 있으면 결과를 MLflow에도 기록한다 |
+| ⑦ | `sidecar`가 상태와 지표를 EvalHub에 보고하고, 평가자는 EvalHub API로 결과를 조회한다 |
+
+구성도의 원본은 [images/5/evalhub-architecture.mmd](images/5/evalhub-architecture.mmd)이며, `harness/render-diagram.ps1`로 다시 렌더링한다.
+
 | 벤치마크 | 내용 |
 |----------|------|
 | `quick` | 단일 프로브(DAN 탈옥) 스모크 테스트 |
