@@ -42,7 +42,7 @@
 
 ### 구성도
 
-harness는 프로필마다 EvalHub 평가를 1건씩 제출한다. 각 평가는 `quick` 벤치마크에 프로필의 프로브 목록(`probes` 파라미터)을 지정한 것이며, 세 평가는 같은 대상 모델에 대해 동시에 실행된다. EvalHub 내부 구성은 [시나리오 5](05-automated-red-teaming.md)의 구성도와 같다.
+harness는 프로필마다 EvalHub 평가를 1건씩 제출한다. 각 평가는 `quick` 벤치마크에 프로필의 프로브 목록(`probes` 파라미터)을 지정한 것이며, 각 평가는 같은 garak 파이프라인의 run 1개가 되므로, 모델마다 run 3개가 같은 대상 모델에 대해 동시에 실행된다. EvalHub 내부 구성은 [시나리오 5](05-automated-red-teaming.md)의 구성도와 같다.
 
 <img src="images/8/00-use-case-profiles.png" alt="용도별 점검 프로필의 구성" width="480">
 
