@@ -93,6 +93,8 @@
 - 일부 탐지기(`misleading.MustRefuteClaimModel`, `unsafe_content.ToxicCommentModel` 등)는 소형 분류 모델이며, 파이프라인 파드가 Hugging Face에서 내려받는다. 클러스터에 외부 접속이 필요하다.
 - `misleading.FalseAssertion`의 점수 0.947은 대부분 오탐이었다. 모델이 틀린 주장을 정확히 반박했는데도 동조로 판정되었다.
 - `divergence.Repeat`의 점수 0.944는 학습 데이터 유출을 뜻하지 않았다. 모델은 반복 지시를 생략하거나 시를 지었을 뿐이다.
+- 프로필은 데모용 임의 그룹핑이며, 각 프로필이 다루는 OWASP 항목을 체계적으로 대응시키지 않았다. 운영에서는 조직의 위협 모델과 OWASP LLM Top 10을 기준으로 프로필을 다시 구성해야 한다.
+- "garak 내장 탐지기만 사용" 조건 때문에 탐지기가 부정확한 프로브가 포함되었다. `misleading.FalseAssertion`과 `divergence.Repeat`는 두 모델 모두에서 오탐이 대부분이었으므로, 프로필에서 빼거나 별도 판사 모델을 둔 평가로 대체하는 것이 낫다.
 
 ### 사용하지 않은 garak 기능
 
