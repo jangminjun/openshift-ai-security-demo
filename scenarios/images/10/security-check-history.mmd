@@ -1,0 +1,34 @@
+%% Source of 00-security-check-history.png. Re-render:
+%% .\harness\render-diagram.ps1 scenarios\images\10\security-check-history.mmd scenarios\images\10\00-security-check-history.png
+flowchart LR
+  subgraph START["점검 시작"]
+    direction TB
+    M["평가자 (수동)<br/>redteam-check"]
+    CJ["CronJob<br/>매주 월 02:00 UTC<br/>계정<br/>redteam-scheduler<br/>권한 evalhub-user"]
+    CM[("ConfigMap<br/>job.json<br/>표준 프로브 8종")]
+    CM -.-> CJ
+  end
+
+  EH["EvalHub<br/>작업 기록:<br/>파드 안 sqlite<br/>(재시작 시 삭제)"]
+
+  subgraph RUN["실행 — AI Pipelines"]
+    direction LR
+    P["garak<br/>파이프라인 run"]
+    T["대상 모델"]
+    P -->|"③ 공격 · 판정"| T
+  end
+
+  subgraph REC["기록 — RHOAI 내장 MLflow"]
+    direction TB
+    ML["MLflow 서버<br/>실험(experiment)<br/>model-security<br/>-checks"]
+    ST[("PVC mlflow-pvc<br/>(재시작해도 유지)<br/>mlflow.db:<br/>run · 지표 · 태그<br/>artifacts:<br/>원본 리포트")]
+    ML --> ST
+  end
+
+  H["점검 이력<br/>scenario10-history<br/>시점 · 모델별 비교"]
+
+  M -->|"① 평가 요청<br/>+ 기록할 실험 이름"| EH
+  CJ -->|"① 평가 요청<br/>+ 기록할 실험 이름"| EH
+  EH -->|"② 실행"| P
+  EH -->|"④ 결과만 기록<br/>공격 유형별 점수<br/>모델 태그 · 리포트"| ML
+  ML -->|"⑤ 조회"| H

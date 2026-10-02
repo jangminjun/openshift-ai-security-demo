@@ -3,15 +3,20 @@
 ## 기능 설명
 
 - 분류: 평가 및 보안 > 보안/자산 (확장 시나리오)
-- TrustyAI EvalHub는 평가 작업에 `experiment` 항목이 있으면 결과를 RHOAI 내장 MLflow에 기록한다.
-- Kubernetes CronJob은 최소 권한(`evalhub-user` 역할)의 서비스 계정으로 정해진 주기마다 EvalHub에 점검을 제출한다.
-- EvalHub의 기본 데이터베이스는 메모리 sqlite이므로 파드가 재시작되면 작업 기록이 사라진다. 점검 이력의 영구 저장소는 MLflow이다.
+- 점검은 AI Pipelines에서 **실행**되고, 결과는 RHOAI 내장 MLflow에 **기록**된다. MLflow는 점검을 실행하지 않는다.
+- MLflow는 실험 기록을 관리하는 서버이다. 실험(experiment)은 관련 run을 모아 두는 폴더이고, run 하나에 지표·태그·파일이 붙는다.
+- 평가 요청에 `experiment` 항목(기록할 실험 이름과 태그)을 넣으면, EvalHub는 점검이 끝난 뒤 결과를 그 실험의 run으로 기록한다.
+- Kubernetes CronJob은 최소 권한(`evalhub-user` 역할)의 서비스 계정으로 정해진 주기마다 같은 점검을 EvalHub에 제출한다.
 
-| 저장소 | 보존 | 용도 |
-|--------|------|------|
-| EvalHub 작업 기록 (기본 설정) | 파드 재시작 시 삭제 | 실행 중인 작업 상태 확인 |
-| MLflow 실험 | 영구 보존 | 모델 간·시점 간 비교 |
-| 오브젝트 스토리지 (MinIO) | 영구 보존 | 원본 리포트 |
+![점검 이력과 정기 점검의 흐름](images/10/00-security-check-history.png)
+
+| 기록 위치 | 실제 저장 | 보존 | 용도 |
+|--------|------|------|------|
+| EvalHub 작업 기록 (데모 설정) | 파드 안 sqlite | 파드 재시작 시 삭제 | 실행 중인 작업 상태 확인 |
+| MLflow 실험 | sqlite `mlflow.db` + 리포트 파일, PVC `mlflow-pvc`(2Gi) | 재시작해도 유지 | 모델 간·시점 간 비교 |
+| 파이프라인 서버 MinIO | 오브젝트 스토리지 | 유지 | 원본 리포트 |
+
+Dashboard의 Pipelines Runs 목록에 보이는 "MLflow experiment `AIP-default`"는 파이프라인 run을 연결해 두는 별도 실험이며, 이 시나리오가 점검 결과를 기록하는 `model-security-checks`와 다르다.
 
 ## 사전 준비
 
