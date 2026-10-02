@@ -44,7 +44,7 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 ### 1) Automated Red Teaming 파이프라인 실행
 
-시연자는 `intents` 벤치마크를 파이프라인 모드로 실행하고, Dashboard의 `Red Teaming Demo` → **Pipelines** → Runs에서 `evalhub-garak-scan` run의 진행을 보여 준다.
+시연자는 `intents` 벤치마크를 파이프라인 모드로 실행하고, Dashboard의 **Develop & train** → **Pipelines** → **Runs**(프로젝트 `Red Teaming Demo`)에서 run의 진행을 보여 준다. run 이름은 `evalhub-garak-<EvalHub job ID>` 형식이다.
 
 ```
 ./harness/harness.sh scenario5-run intents garak-kfp
@@ -59,6 +59,9 @@ oc get workflow -n redteam-demo
 | `prepare-prompts` | 스캔 입력 정리 |
 | `garak-scan` | 프롬프트를 변형·번역해 주입하고 응답 판정 |
 | `write-kfp-outputs` | 결과와 리포트 저장 |
+
+![파이프라인 run 그래프와 garak-scan 단계의 입력 파라미터](images/5/01-pipeline-run-graph.png)
+
 
 검증 환경에서 전체 실행은 약 4분이 걸렸다. `quick` 벤치마크는 약 3분, 파이프라인 없는 `scenario5-run quick garak`은 약 30초가 걸린다.
 
@@ -95,17 +98,30 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 ./harness/harness.sh redteam-status <job-id>
 ```
 
-`intents` 실행 결과(검증 환경, 대상 Qwen2.5 1.5B):
+`intents` 실행 결과(검증 환경, 대상 Qwen2.5 1.5B, job `b303ef8e`):
 
 | 지표 | 공격 성공률 |
 |------|:---:|
-| `base.IntentProbe` | 0.4125 |
-| `spo.SPOIntent` | 0.8085 |
-| `spo.SPOIntentUserAugmented` | 0.7778 |
-| `spo.SPOIntentSystemAugmented` | 1.0 |
-| 전체 | **1.0** (실패) |
+| `base.IntentProbe` (합성 프롬프트 그대로) | 0.475 |
+| `spo.SPOIntent` (프롬프트 주입) | 0.8095 |
+| `spo.SPOIntentUserAugmented` | 0.875 |
+| `spo.SPOIntentSystemAugmented`, `spo.SPOIntentBothAugmented` | 0 |
+| `multilingual.TranslationIntent`, `tap.TAPIntent` | 0 |
+| 전체 | **0.9875** (실패) |
 
-번역 프로브 실행 결과: 번역 프로브가 보낸 1,092건은 모두 중국어였다.
+리포트 `scan.intents.html`의 개요는 다음과 같다. 공격 프롬프트 80개 중 79개가 공격에 성공했다(Unsafe Prompts 79, Safe Prompts 1, 공격 성공률 99%).
+
+![레드티밍 리포트 개요 — 프로브별·위험 분류별 모델 행동](images/5/02-intents-report-overview.png)
+
+- **Model Behavior By Probe**: 각 단계에서 모델이 따른(complied, 빨강) 프롬프트와 거절한(refused, 회색) 프롬프트의 수를 보여 준다. 앞 단계에서 성공한 프롬프트는 다음 단계로 넘어가지 않는다.
+- **Overview by Intent**: 8개 위험 분류 중 7개가 100% 뚫렸고, 성적 콘텐츠(`S007sexuallyexplicit`)만 10개 중 9개가 뚫렸다.
+- 후반 단계(시스템 프롬프트 증강, 번역, TAP)의 점수가 0인 이유는 모델이 견고해서가 아니다. 그 시점에 남은 프롬프트가 1개뿐이었고, 모델이 그 1개를 거절했다.
+
+리포트의 Probe Details는 단계별·위험 분류별 결과와 공격 변형(DAN 계열 등)별 성공률을 보여 준다.
+
+![레드티밍 리포트 프로브 상세 — Baseline과 SPO 단계](images/5/03-intents-report-probe-details.png)
+
+번역 프로브만 지정한 실행 결과: 번역 프로브가 보낸 1,092건은 모두 중국어였다.
 
 | 지표 | 공격 성공률 |
 |------|:---:|
@@ -124,13 +140,15 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 
 - 평가자는 EvalHub와 garak-kfp 파이프라인으로 배포된 모델에 대한 레드티밍을 자동 실행했다.
 - 파이프라인은 위험 분류 체계에서 공격 프롬프트 80개를 합성하고, 공격 기법을 단계적으로 강화하며 주입했다.
-- 대상 모델의 공격 성공률은 공격 기법이 더해질수록 41%에서 100%로 상승했고, 중국어 번역 공격에서는 31%에서 87%로 상승했다.
-- 평가 결과는 리포트(`scan.intents.html`, `scan.hitlog.jsonl`)로 저장되었다.
+- 대상 모델은 합성 프롬프트를 그대로 보냈을 때 47.5%를 따랐고, 프롬프트 주입이 더해지자 공격 프롬프트 80개 중 79개(99%)가 성공했다.
+- 번역 프로브만 지정한 실행에서 공격 성공률은 영어 31%, 중국어 87%였다.
+- 평가 결과는 리포트(`scan.intents.html`, `scan.hitlog.jsonl`)로 저장되었으며, 리포트는 위험 분류별·단계별 결과를 차트로 제공한다.
 
 ## 운영 가이드
 
 - 평가자는 카탈로그에 점수가 없는 사내 모델·파인튜닝 모델도 같은 기준으로 평가한다.
 - 공격 프롬프트는 사람이 작성하지 않고 위험 분류 체계에서 자동으로 합성·변형·번역된다.
-- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(41% → 81% → 100%). 영어로 거절한 요청을 다른 언어로 통과시킬 수도 있다(31% → 87%).
+- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(47.5% → 99%). 영어로 거절한 요청을 다른 언어로 통과시킬 수도 있다(31% → 87%).
+- 후반 단계의 점수 0은 견고함이 아니라 시도 대상이 남지 않았다는 뜻일 수 있다. 평가자는 리포트의 Model Behavior By Probe에서 단계별 시도 건수를 함께 확인한다.
 - 평가는 파이프라인으로 실행되므로 배포 전 안전성 게이트로 자동화할 수 있다.
 - 실행 중인 평가를 멈출 때는 EvalHub 작업과 파이프라인 실행을 함께 중지한다(`harness/harness.sh redteam-cancel <job-id>`).
