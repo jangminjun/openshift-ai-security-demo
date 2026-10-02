@@ -1,0 +1,28 @@
+%% Source of 00-guardrails-architecture.png. Re-render:
+%% .\harness\render-diagram.ps1 scenarios\images\9\guardrails-architecture.mmd scenarios\images\9\00-guardrails-architecture.png
+flowchart LR
+  U["사용자"]
+  G["garak 점검<br/>(EvalHub<br/>파이프라인)"]
+  SH["refusal shim<br/>(데모용 어댑터)<br/>차단 응답을<br/>거절 문장으로"]
+
+  subgraph GP["GuardrailsOrchestrator 파드"]
+    direction TB
+    GW["게이트웨이 :8090<br/>/all/v1<br/>/passthrough/v1"]
+    OR["오케스트레이터 :8032"]
+    GW --> OR
+  end
+
+  subgraph DET["탐지 모델 (KServe, CPU)"]
+    direction TB
+    PI["프롬프트 주입 탐지<br/>deberta-v3-base"]
+    HAP["유해 표현(HAP) 탐지<br/>granite-guardian<br/>-hap-38m"]
+  end
+
+  T["대상 모델<br/>redteam-target<br/>vLLM + Granite 8B (GPU)"]
+
+  U -->|"① 요청"| GW
+  G --> SH --> GW
+  OR -->|"② 입력 검사"| DET
+  OR -->|"③ 통과 시 생성"| T
+  OR -->|"④ 출력 검사"| DET
+  OR -.->|"⑤ 응답 또는 차단<br/>(빈 choices +<br/>탐지 결과)"| GW
