@@ -16,14 +16,16 @@ flowchart TB
 
   H -->|"① scenario8-scan<br/>프로필마다 평가 1건<br/>quick + probes 파라미터"| EH["EvalHub"]
 
-  subgraph P["② 같은 garak 파이프라인의 run 3개 (동시 실행)"]
+  subgraph P[" "]
     direction LR
     R1["코딩 run<br/>프로브 5종"]
     R2["챗봇 run<br/>프로브 8종"]
     R3["RAG run<br/>프로브 6종"]
   end
 
-  EH --> R1 & R2 & R3
+  EH --> R1
+  EH -->|"② run × 3<br/>(동시 실행)"| R2
+  EH --> R3
   R1 & R2 & R3 -->|"③ 공격 · 판정"| T["대상 모델<br/>Granite 8B 또는 Qwen 1.5B"]
   T ~~~ R[("④ 결과<br/>scenario8.tsv<br/>MLflow use-case-profiles<br/>MinIO 리포트")]
   R1 & R2 & R3 -.-> R
