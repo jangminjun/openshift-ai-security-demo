@@ -114,16 +114,22 @@ Windows (PowerShell):
 
 CronJob 실행의 EvalHub job ID는 `f9828c78`, 파이프라인 run은 `evalhub-garak-scan-4p99s`이며, 제출 계정은 `system:serviceaccount:redteam-demo:redteam-scheduler`로 기록되었다.
 
-Dashboard의 **Develop & train** → **Experiments**에서도 MLflow 실험을 볼 수 있다. 다만 실험이 두 종류이므로 구분해서 본다.
+Dashboard의 **Develop & train** → **Experiments**에서도 MLflow 실험을 볼 수 있다. 프로젝트 `Red Teaming Demo`에는 실험 4개가 있으며, 점수가 있는 실험과 없는 실험을 구분해서 본다.
+
+![Experiments 목록 — 프로젝트 Red Teaming Demo의 MLflow 실험 4개](images/10/01-mlflow-experiments.png)
 
 | 실험 | 들어오는 run | 지표 |
 |------|------|------|
-| `AIP-default` | 파이프라인 run이 자동으로 연결됨 (`evalhub-garak-<job ID>`) | 없음 (실행 시간·상태·파이프라인 태그만) |
-| `model-security-checks` | 평가 요청에 `experiment`를 넣은 점검 | 공격 유형별 공격 성공률(`*_asr`), 모델 태그, 원본 리포트 |
+| `AIP-default` | 파이프라인 run이 자동으로 연결됨 (`evalhub-garak-<job ID>`, 검증 환경 28개) | 없음 (실행 시간·상태·파이프라인 태그만) |
+| `model-security-checks` | 평가 요청에 `experiment`를 넣은 점검 (시나리오 7·9·10) | 공격 유형별 공격 성공률(`*_asr`), 모델 태그, 원본 리포트 |
+| `use-case-profiles` | 시나리오 8의 프로필 점검 | 위와 같음 |
+| `redteam-security-checks` | 초기 연결 테스트 | — |
 
-![AIP-default 실험의 run 목록](images/10/01-mlflow-aip-default-runs.png)
+점검 1회는 `model-security-checks`에 run 2개를 만든다. 작업 단위의 부모 run에는 지표가 없고, 벤치마크 단위의 하위 run(`<job ID>_0`)에 지표가 있다.
 
-![AIP-default 실험의 run 상세 — 지표 없음, 파이프라인 태그만 기록](images/10/02-mlflow-aip-default-run-detail.png)
+![AIP-default 실험의 run 목록](images/10/02-mlflow-aip-default-runs.png)
+
+![AIP-default 실험의 run 상세 — 지표 없음, 파이프라인 태그만 기록](images/10/03-mlflow-aip-default-run-detail.png)
 
 점검 결과(점수)를 비교할 때는 `model-security-checks` 실험을 연다.
 
