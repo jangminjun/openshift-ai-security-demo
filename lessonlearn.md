@@ -56,7 +56,7 @@
 - 폐쇄망 동작은 확인하지 않았다. 검증 환경은 인터넷에 연결되어 있었다.
 - 평가 제출은 EvalHub REST API로 수행했다. Dashboard 화면에서의 제출은 확인하지 않았다.
 - 작업 결과의 최상위 `results.test.pass`는 다른 기준(0.5, 높을수록 통과)으로 계산되어 공격 성공률 1.0인 실행을 `pass: true`로 표시한다. 벤치마크 단위의 `results.benchmarks[].test`(기준 0.3)가 올바른 판정이다.
-- 스캔 로그에 garak 표준 HTML 리포트 생성 실패 메시지가 남을 수 있다. `intents`의 `scan.intents.html`은 별도로 생성된다.
+- 스캔(자동 침투 테스트) 로그에 garak 표준 HTML 리포트 생성 실패 메시지가 남을 수 있다. `intents`의 `scan.intents.html`은 별도로 생성된다.
 
 ### garak-kfp 구성 시 발생한 문제와 대응
 

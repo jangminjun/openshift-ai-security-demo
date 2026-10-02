@@ -21,7 +21,7 @@ GA 기능(시나리오 1~6)만 따로 정리한 목록은 [rhoai-3.5-ga-features
 
 | # | 기능명 | 무엇이 달라지나 | 시연 방식 | 시나리오 |
 |---|--------|-----------------|-----------|----------|
-| 4 | Red Hat 검증 모델 적대적 취약점 스캐닝 | garak 스캔이 검증 파이프라인에 통합되고 점수가 공개됨 | 모델 카탈로그 UI + CLI 확인 | [04-validated-model-garak-scanning.md](scenarios/04-validated-model-garak-scanning.md) |
+| 4 | Red Hat 검증 모델 적대적 취약점 스캐닝 | garak 스캔(자동 침투 테스트)이 검증 파이프라인에 통합되고 점수가 공개됨 | 모델 카탈로그 UI + CLI 확인 | [04-validated-model-garak-scanning.md](scenarios/04-validated-model-garak-scanning.md) |
 | 5 | Automated Red Teaming (자동화된 레드티밍) | 내 모델에 garak 기반 안전성 평가를 파이프라인으로 자동 실행 | 파이프라인 실행 | [05-automated-red-teaming.md](scenarios/05-automated-red-teaming.md) |
 | 6 | Red Hat AI 모델 카탈로그 Safety & Security 탭 | 카탈로그 전용 탭에서 카테고리별 보안 스캔 점수를 표시 | 모델 카탈로그 UI | [06-model-catalog-safety-security-tab.md](scenarios/06-model-catalog-safety-security-tab.md) |
 

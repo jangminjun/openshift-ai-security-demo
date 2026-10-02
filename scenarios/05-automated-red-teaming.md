@@ -10,7 +10,7 @@
 | 구성 요소 | 역할 |
 |-----------|------|
 | EvalHub | 평가 작업을 받아 실행하고 결과를 보관하는 서비스 (REST API) |
-| `garak` 프로바이더 | EvalHub 작업 파드 안에서 스캔을 실행 |
+| `garak` 프로바이더 | EvalHub 작업 파드 안에서 스캔(자동 침투 테스트)을 실행 |
 | `garak-kfp` 프로바이더 | AI Pipelines로 스캔을 실행하고 리포트를 오브젝트 스토리지에 저장 |
 | 파이프라인 서버 (DataSciencePipelinesApplication) | `garak-kfp`가 파이프라인을 제출하는 대상 |
 | 스캔 대상 모델 (InferenceService) | OpenAI 호환 chat completions 엔드포인트 |
