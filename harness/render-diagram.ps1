@@ -18,17 +18,18 @@ $html = Join-Path $env:TEMP ("diagram-" + [guid]::NewGuid() + ".html")
 <script>mermaid.initialize({startOnLoad:true,theme:'default',themeVariables:{fontSize:'22px'},flowchart:{htmlLabels:true,nodeSpacing:40,rankSpacing:70}});</script>
 </head><body><pre class="mermaid">$src</pre></body></html>
 "@ | Set-Content -Encoding UTF8 $html
-$outFull = [System.IO.Path]::GetFullPath($Out)
+# Resolve against the PowerShell location, not the .NET process directory.
+$outFull = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
 # msedge.exe returns before the screenshot is written, so wait on the
 # process; a separate profile keeps it apart from any open Edge window.
-$profile = Join-Path $env:TEMP ("diagram-edge-" + [guid]::NewGuid())
+$edgeProfile = Join-Path $env:TEMP ("diagram-edge-" + [guid]::NewGuid())
 if (Test-Path $outFull) { Remove-Item $outFull }
-$edgeArgs = @('--headless=new', '--disable-gpu', '--hide-scrollbars', "--user-data-dir=`"$profile`"",
+$edgeArgs = @('--headless=new', '--disable-gpu', '--hide-scrollbars', "--user-data-dir=`"$edgeProfile`"",
   "--window-size=$Width,$Height", '--virtual-time-budget=10000', "--screenshot=`"$outFull`"",
   "file:///$($html -replace '\\','/')")
 Start-Process -FilePath $edge -ArgumentList $edgeArgs -Wait -WindowStyle Hidden
 Remove-Item $html
-Remove-Item -Recurse -Force $profile -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force $edgeProfile -ErrorAction SilentlyContinue
 if (-not (Test-Path $outFull)) { throw "Edge did not write $outFull" }
 
 # Trim the white margin around the drawing.

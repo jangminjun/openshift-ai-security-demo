@@ -1,0 +1,23 @@
+%% Source of 00-use-case-profiles.png. Re-render:
+%% .\harness\render-diagram.ps1 scenarios\images\8\use-case-profiles.mmd scenarios\images\8\00-use-case-profiles.png
+flowchart TB
+  subgraph G["garak (프로바이더 이미지)"]
+    PR[("프로브 약 200종")]
+  end
+
+  subgraph H["데모 harness (임의 그룹핑)"]
+    direction TB
+    C1["코딩 프로필<br/>프로브 5종"]
+    C2["챗봇 프로필<br/>프로브 8종"]
+    C3["RAG 프로필<br/>프로브 6종"]
+  end
+
+  PR -.->|"용도별로 골라 묶음<br/>config.env"| H
+
+  H -->|"① scenario8-scan<br/>프로필마다 평가 1건<br/>quick + probes 파라미터"| EH["EvalHub"]
+  EH -->|"② 동시에 3개 파이프라인"| P["garak-kfp 파이프라인 × 3"]
+  P -->|"③ 공격 · 판정"| T["대상 모델<br/>Granite 8B / Qwen 1.5B"]
+  P -->|"④ 결과"| R[("scenario8.tsv<br/>MLflow use-case-profiles<br/>MinIO 리포트")]
+
+  R --> CMP["⑤ scenario8-compare<br/>프로필별 점수 비교"]
+  CMP --> V["⑥ hitlog로 오탐 제거<br/>핵심 항목으로 용도별 판정"]

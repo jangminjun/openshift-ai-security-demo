@@ -40,6 +40,12 @@
 
 프로필 구성의 한계(공식 기준 아님, 일부 탐지기의 오탐)는 `lessonlearn.md`에 정리했다.
 
+### 구성도
+
+harness는 프로필마다 EvalHub 평가를 1건씩 제출한다. 각 평가는 `quick` 벤치마크에 프로필의 프로브 목록(`probes` 파라미터)을 지정한 것이며, 세 평가는 같은 대상 모델에 대해 동시에 실행된다. EvalHub 내부 구성은 [시나리오 5](05-automated-red-teaming.md)의 구성도와 같다.
+
+<img src="images/8/00-use-case-profiles.png" alt="용도별 점검 프로필의 구성" width="480">
+
 ## 사전 준비
 
 관리자는 `redteam-demo` 프로젝트에 레드티밍 환경을 만든다. 일부 탐지기는 Hugging Face에서 내려받으므로 클러스터에 외부 접속이 필요하다.
