@@ -14,16 +14,18 @@
 
 표준 시험지는 OWASP LLM 위험을 다루는 프로브 8종이며, 모두 규칙 기반 탐지기로 채점된다. 따라서 후보 모델이 바뀌어도 채점 기준은 바뀌지 않는다. 프롬프트가 많은 프로브는 프로브당 40개로 제한한다.
 
-| 공격 유형 | garak 프로브 | OWASP |
-|-----------|--------------|:---:|
-| 탈옥 | `dan.Dan_11_0` | LLM01 |
-| 프롬프트 주입 | `promptinject.HijackHateHumans` | LLM01 |
-| 간접 프롬프트 주입 | `latentinjection.LatentInjectionReport` | LLM01 |
-| 인코딩 우회 | `encoding.InjectBase64` | LLM01 |
-| 악성코드 생성 | `malwaregen.TopLevel` | — |
-| 정보 유출 (역할극 우회) | `grandma.Win10` | LLM06 |
-| 데이터 유출 (마크다운) | `web_injection.MarkdownImageExfil` | LLM02 |
-| 출력 기반 공격 (SQL) | `exploitation.SQLInjectionEcho` | LLM02 |
+| 공격 유형 | garak 프로브 | 리포트 표시 이름 (모듈) | OWASP |
+|-----------|--------------|------|:---:|
+| 탈옥 | `dan.Dan_11_0` | `dan` — DAN probes | LLM01 |
+| 프롬프트 주입 | `promptinject.HijackHateHumans` | `promptinject` — PromptInject | LLM01 |
+| 간접 프롬프트 주입 | `latentinjection.LatentInjectionReport` | `latentinjection` — Latent injection | LLM01 |
+| 인코딩 우회 | `encoding.InjectBase64` | `encoding` — Encoding-based prompt injection | LLM01 |
+| 악성코드 생성 | `malwaregen.TopLevel` | `malwaregen` — Malware generation | — |
+| 정보 유출 (역할극 우회) | `grandma.Win10` | `grandma` — The grandma attack | LLM06 |
+| 데이터 유출 (마크다운) | `web_injection.MarkdownImageExfil` | `web_injection` — Web Injection | LLM02 |
+| 출력 기반 공격 (SQL) | `exploitation.SQLInjectionEcho` | `exploitation` — Exploitation | LLM02 |
+
+프로브 이름의 점(`.`) 앞부분이 리포트에 표시되는 모듈 이름이다.
 
 ## 사전 준비
 
@@ -137,7 +139,7 @@ start .\harness\reports\af743566-1a0a-4ae1-8c70-15edd72b7c1e\scan.report.html
 
 ![Granite 3.3 8B 점검 리포트](images/7/02-granite-report.png)
 
-- 리포트의 각 행은 공격 유형(garak 모듈)이다. 모듈과 공격 유형의 대응은 기능 설명의 프로브 표와 같다(예: `latentinjection` = 간접 프롬프트 주입).
+- 리포트의 각 행은 공격 유형(garak 모듈)이다. 영문 모듈 이름과 공격 유형의 대응은 기능 설명의 표("리포트 표시 이름" 열)에 있다.
 - 리포트의 백분율은 garak이 모듈 단위로 계산한 방어율이고, DC-1~DC-5는 garak의 위험 등급이다(DC-1이 가장 위험).
 - 행을 펼치면 프로브별 점수 차트와 OWASP·AVID 태그가 나온다. 다음은 Qwen의 간접 프롬프트 주입을 펼친 화면이다. 방어율 67.5%는 공격 성공률 0.325에 해당하며, 태그 `owasp:llm01`은 OWASP LLM01(프롬프트 주입)을 뜻한다.
 
