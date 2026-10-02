@@ -15,9 +15,18 @@ flowchart TB
   PR -.->|"용도별로 골라 묶음<br/>config.env"| H
 
   H -->|"① scenario8-scan<br/>프로필마다 평가 1건<br/>quick + probes 파라미터"| EH["EvalHub"]
-  EH -->|"② 프로필마다<br/>run 1개"| P["같은 garak<br/>파이프라인의<br/>run 3개 동시 실행"]
-  P -->|"③ 공격 · 판정"| T["대상 모델<br/>Granite 8B / Qwen 1.5B"]
-  P -->|"④ 결과"| R[("scenario8.tsv<br/>MLflow use-case-profiles<br/>MinIO 리포트")]
+
+  subgraph P["② 같은 garak 파이프라인의 run 3개 (동시 실행)"]
+    direction LR
+    R1["코딩 run<br/>프로브 5종"]
+    R2["챗봇 run<br/>프로브 8종"]
+    R3["RAG run<br/>프로브 6종"]
+  end
+
+  EH --> R1 & R2 & R3
+  R1 & R2 & R3 -->|"③ 공격 · 판정"| T["대상 모델<br/>Granite 8B 또는 Qwen 1.5B"]
+  T ~~~ R[("④ 결과<br/>scenario8.tsv<br/>MLflow use-case-profiles<br/>MinIO 리포트")]
+  R1 & R2 & R3 -.-> R
 
   R --> CMP["⑤ scenario8-compare<br/>프로필별 점수 비교"]
   CMP --> V["⑥ hitlog로 오탐 제거<br/>핵심 항목으로 용도별 판정"]
