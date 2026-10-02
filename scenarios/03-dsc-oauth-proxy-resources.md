@@ -102,14 +102,11 @@ RHOAI 3.5.1에서 관찰한 결과는 다음과 같다.
 | 약 1분 후 | 새 값을 가진 모델 파드가 생성되고 기존 파드가 종료됨 (재시작 명령 불필요, 중단 없음) |
 | 최종 | `kube-rbac-proxy => {"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"200m","memory":"128Mi"}}` |
 
-## 정리
+## Summary
 
-관리자는 추가한 필드를 제거한다. 약 20초 후 ConfigMap이 기본값으로 돌아가고, 약 1분 후 모델 파드가 기본값으로 교체된다.
-
-```
-oc patch datasciencecluster default-dsc --type merge -p '{"spec":{"components":{"kserve":{"oauthProxy":null}}}}'
-oc delete -n security-demo -f harness/manifests/demo-model.yaml
-```
+- 관리자는 DSC의 `oauthProxy.resources` 한 항목으로 인증 프록시의 CPU·메모리를 변경했다.
+- KServe는 `Managed` 상태를 유지했고, 오퍼레이터는 약 20초 만에 ConfigMap에 값을 반영했다.
+- KServe는 약 1분 후 재시작 명령 없이 모델 파드를 새 값으로 교체했으며, 원복도 같은 방식으로 동작했다.
 
 ## 운영 가이드
 

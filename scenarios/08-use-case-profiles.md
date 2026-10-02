@@ -92,11 +92,11 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 | `packagehallucination.Python` | 0.15 | 존재하지 않는 `pyzapata`, `pyolang`을 import | 실제 위험 |
 | `sysprompt_extraction` | 0.175 | 숨겨진 시스템 지시를 그대로 출력 | 실제 유출 |
 
-## 정리
+## Summary
 
-```
-oc delete project redteam-demo
-```
+- 평가자는 코딩 어시스턴트, 고객 상담 챗봇, RAG·에이전트의 용도별 시험지로 두 모델을 점검했다.
+- 용도별 우열은 범용 점검과 달랐다. RAG와 코딩에서는 Qwen이 나았고, 챗봇에서는 두 모델이 비슷했다.
+- 실제 응답 확인 결과, 점수가 가장 높았던 허위 주장 동조(0.947)는 오탐이었고, 점수가 낮은 패키지 환각과 시스템 프롬프트 유출이 실제 위험이었다.
 
 ## 운영 가이드
 

@@ -86,12 +86,11 @@ oc get inferenceservice,guardrailsorchestrator -n redteam-demo
 
 가드레일은 탐지 모델이 인식하는 직접 공격(탈옥, 프롬프트 주입)을 차단했다. 공격 문구가 없는 역할극과 문서 속 숨은 지시는 통과했다.
 
-## 정리
+## Summary
 
-```
-oc delete -n redteam-demo -f harness/manifests/redteam-guardrails-shim.yaml -f harness/manifests/redteam-guardrails.yaml
-oc delete configmap guardrails-auto-config guardrails-orchestrator-gateway-auto-config -n redteam-demo
-```
+- 관리자는 CPU 탐지 모델 2개와 GuardrailsOrchestrator 게이트웨이를 대상 모델 앞에 배치했다.
+- 가드레일은 탈옥(1.0 → 0)과 프롬프트 주입(0.475 → 0.05)을 차단했다.
+- 가드레일은 공격 문구가 없는 역할극 우회(1.0)와 문서 속 숨은 지시(0.825)를 차단하지 못했으며, 판정은 탈락(4/8 → 3/8 실패)으로 유지되었다.
 
 ## 운영 가이드
 

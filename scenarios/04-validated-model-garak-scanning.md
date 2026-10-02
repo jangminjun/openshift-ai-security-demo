@@ -81,9 +81,11 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 | 0.3 ~ 0.6 | 우려 |
 | 0.6 ~ 1.0 | 심각 |
 
-## 정리
+## Summary
 
-이 시나리오는 리소스를 만들지 않으므로 정리할 대상이 없다.
+- Red Hat은 검증 모델의 garak 스캔 점수를 모델 카탈로그에 공개한다(검증 환경 133개 모델 중 25개).
+- 점수는 모델 상세의 Safety and security insights 탭에 공격 성공률(백분율)로 표시되며, 카탈로그 API 값과 일치했다.
+- 같은 계열 모델도 Prompt Injection 점수가 크게 달랐다(gemma-4-12B 0.0%, gemma-3-12b 73.0%).
 
 ## 운영 가이드
 

@@ -120,13 +120,12 @@ REDTEAM_PROBES=multilingual.TranslationIntent ./harness/harness.sh scenario5-run
 | `scan.report.jsonl` | 모든 시도의 원본 기록 |
 | `sdg_normalized_output.csv` | 합성된 공격 프롬프트 |
 
-## 정리
+## Summary
 
-관리자는 프로젝트를 삭제해 GPU를 반환한다. 로컬의 `harness/reports/`는 남는다.
-
-```
-oc delete project redteam-demo
-```
+- 평가자는 EvalHub와 garak-kfp 파이프라인으로 배포된 모델에 대한 레드티밍을 자동 실행했다.
+- 파이프라인은 위험 분류 체계에서 공격 프롬프트 80개를 합성하고, 공격 기법을 단계적으로 강화하며 주입했다.
+- 대상 모델의 공격 성공률은 공격 기법이 더해질수록 41%에서 100%로 상승했고, 중국어 번역 공격에서는 31%에서 87%로 상승했다.
+- 평가 결과는 리포트(`scan.intents.html`, `scan.hitlog.jsonl`)로 저장되었다.
 
 ## 운영 가이드
 

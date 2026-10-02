@@ -1,6 +1,6 @@
 # Lessons Learned
 
-이 문서는 시나리오 문서의 템플릿(기능 설명 > 사전 준비 > 시연 절차 > 결과 확인 > 정리 > 운영 가이드)에 속하지 않는 내용을 모은다. 각 항목은 시나리오를 구성하고 검증하는 과정에서 확인한 사실, 제약, 장애와 대응을 기록한다.
+이 문서는 시나리오 문서의 템플릿(기능 설명 > 사전 준비 > 시연 절차 > 결과 확인 > Summary > 운영 가이드)에 속하지 않는 내용을 모은다. 각 항목은 시나리오를 구성하고 검증하는 과정에서 확인한 사실, 제약, 장애와 대응을 기록한다.
 
 검증 환경은 Red Hat OpenShift AI(RHOAI) 3.5.1, OpenShift 4.22.16, AWS 샌드박스 클러스터(워커 4대, NVIDIA A10G GPU 1장)이다.
 
@@ -119,3 +119,78 @@
 - MLflow 서비스는 클러스터 외부에 노출되어 있지 않다. `scenario10-history`는 EvalHub 파드 안에서 MLflow API를 호출한다. MLflow의 Dashboard 화면 경로는 확인하지 않았다.
 - EvalHub가 만드는 작업 단위의 상위 run은 상태가 `RUNNING`으로 남는다. 점수가 담긴 하위 run은 `FINISHED`로 종료된다.
 - RHOAI 운영자는 EvalHub에 MLflow 토큰과 작업 공간을 설정하지만 서버 주소(`MLFLOW_TRACKING_URI`)는 비워 둔다. 관리자는 EvalHub CR의 `spec.env`에 주소를 넣어야 한다.
+
+## 시나리오별 환경 원복
+시연 후 리소스를 삭제하거나 설정을 원래대로 되돌리는 명령이다.
+
+### 시나리오 1. 데이터 사이언스 프로젝트 커스텀 RBAC 역할 생성 UI
+
+```
+oc delete rolebinding wb-maintainer-workbench-maintainer wb-reader-workbench-reader -n security-demo
+oc delete role workbench-maintainer workbench-reader -n security-demo
+```
+
+관리자는 일반 사용자 계정을 identity provider에서 직접 제거한다.
+
+### 시나리오 2. 기존 Kubernetes Secret을 워크벤치 환경 변수로 참조
+
+```
+oc delete notebook secret-demo-wb -n security-demo
+oc delete secret external-db-credentials -n security-demo
+```
+
+사용자는 워크벤치용 PVC가 남아 있으면 Dashboard의 Cluster storage에서 삭제한다.
+
+### 시나리오 3. DataScienceCluster API를 통한 OAuth Proxy 리소스 지정
+
+관리자는 추가한 필드를 제거한다. 약 20초 후 ConfigMap이 기본값으로 돌아가고, 약 1분 후 모델 파드가 기본값으로 교체된다.
+
+```
+oc patch datasciencecluster default-dsc --type merge -p '{"spec":{"components":{"kserve":{"oauthProxy":null}}}}'
+oc delete -n security-demo -f harness/manifests/demo-model.yaml
+```
+
+### 시나리오 4. Red Hat 검증 모델 적대적 취약점 스캐닝
+
+이 시나리오는 리소스를 만들지 않으므로 정리할 대상이 없다.
+
+### 시나리오 5. Automated Red Teaming (자동화된 레드티밍)
+
+관리자는 프로젝트를 삭제해 GPU를 반환한다. 로컬의 `harness/reports/`는 남는다.
+
+```
+oc delete project redteam-demo
+```
+
+### 시나리오 6. Red Hat AI 모델 카탈로그 Safety & Security 탭
+
+이 시나리오는 리소스를 만들지 않으므로 정리할 대상이 없다.
+
+### 시나리오 7. 모델 보안 점검: 배포해도 되는 모델인가
+
+```
+oc delete project redteam-demo
+```
+
+### 시나리오 8. 용도별 점검 프로필: 어디에 쓸 모델인가
+
+```
+oc delete project redteam-demo
+```
+
+### 시나리오 9. 가드레일 적용 전후 비교
+
+```
+oc delete -n redteam-demo -f harness/manifests/redteam-guardrails-shim.yaml -f harness/manifests/redteam-guardrails.yaml
+oc delete configmap guardrails-auto-config guardrails-orchestrator-gateway-auto-config -n redteam-demo
+```
+
+### 시나리오 10. 점검 이력 관리와 정기 점검 (MLflow + CronJob)
+
+```
+oc delete cronjob,configmap redteam-scheduled-check -n redteam-demo
+oc delete rolebinding redteam-scheduler-evalhub-user -n redteam-demo
+oc delete serviceaccount redteam-scheduler -n redteam-demo
+```
+
+MLflow에 기록된 이력은 남는다.

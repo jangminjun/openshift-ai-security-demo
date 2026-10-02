@@ -78,15 +78,11 @@ CronJob 파드는 점검을 제출만 하고 몇 초 안에 종료한다. 점검
 
 MLflow에는 점검 작업마다 run이 생기고, 벤치마크별 하위 run에 공격 유형별 공격 성공률(`*_asr`), 모델 이름 태그, 원본 리포트 아티팩트가 기록된다.
 
-## 정리
+## Summary
 
-```
-oc delete cronjob,configmap redteam-scheduled-check -n redteam-demo
-oc delete rolebinding redteam-scheduler-evalhub-user -n redteam-demo
-oc delete serviceaccount redteam-scheduler -n redteam-demo
-```
-
-MLflow에 기록된 이력은 남는다.
+- EvalHub는 점검 결과를 MLflow 실험에 공격 유형별 지표, 모델 태그, 원본 리포트와 함께 기록했다.
+- CronJob은 `evalhub-user` 역할만 가진 서비스 계정으로 정기 점검을 제출했다.
+- 같은 모델의 반복 점검에서 점수가 0.1 안팎으로 변동했으므로, 이력 비교 시 작은 변화는 노이즈로 판단해야 한다.
 
 ## 운영 가이드
 

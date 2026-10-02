@@ -105,14 +105,11 @@ oc get secret -n security-demo
 
 목록에는 원본 `external-db-credentials`만 있고 사본은 없다.
 
-## 정리
+## Summary
 
-```
-oc delete notebook secret-demo-wb -n security-demo
-oc delete secret external-db-credentials -n security-demo
-```
-
-사용자는 워크벤치용 PVC가 남아 있으면 Dashboard의 Cluster storage에서 삭제한다.
+- 사용자는 값을 입력하거나 보지 않고 기존 Secret을 워크벤치에 연결했다.
+- Dashboard는 Secret의 키마다 `secretKeyRef` 참조를 기록했으며, Secret의 사본은 생성되지 않았다.
+- 워크벤치 안에서 `DB_HOST`, `DB_USER`, `DB_PASSWORD` 환경 변수가 모두 주입되었다.
 
 ## 운영 가이드
 

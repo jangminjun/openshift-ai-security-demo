@@ -111,14 +111,11 @@ oc auth can-i create notebooks.kubeflow.org -n security-demo --as=wb-reader
 | 모델 배포 | no | no | no |
 | 권한 부여(RoleBinding 생성) | no | no | no |
 
-## 정리
+## Summary
 
-```
-oc delete rolebinding wb-maintainer-workbench-maintainer wb-reader-workbench-reader -n security-demo
-oc delete role workbench-maintainer workbench-reader -n security-demo
-```
-
-관리자는 일반 사용자 계정을 identity provider에서 직접 제거한다.
+- 프로젝트 관리자는 CLI나 YAML 없이 Dashboard 위저드와 템플릿으로 커스텀 Role을 생성했다.
+- 생성된 Role은 표준 Kubernetes `Role`이며, Kubernetes RBAC가 사용자별 기능 제한을 강제했다.
+- `wb-maintainer`는 워크벤치만 관리하고 모델 배포는 할 수 없었으며, `wb-reader`는 조회만 했고, 역할이 없는 `wb-none`은 프로젝트를 볼 수 없었다.
 
 ## 운영 가이드
 
