@@ -168,7 +168,7 @@ RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다.
 | 4 | 확인됨 — 카탈로그 화면의 Safety and security insights 탭, API 값과 일치 |
 | 5 | 확인됨 — 파이프라인 실행 화면, 자동 주입, 리포트. 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
 | 6 | 확인됨 — Safety and security insights 탭의 카테고리별 점수, API 값과 일치 |
-| 7 | 확인됨 — 후보 2개(Qwen 1.5B, Granite 8B) 점검·비교 |
+| 7 | 확인됨 — 후보 2개(Qwen 1.5B, Granite 8B) 2회씩 점검·비교, Pipelines 화면과 리포트 |
 | 8 | 확인됨 — 프로필 3종 점검, 실제 응답으로 오탐 확인 |
 | 9 | 확인됨 — 가드레일 구성, 차단 동작, 가드레일 경유 점검 |
 | 10 | 확인됨 — MLflow 기록, CronJob 제출, 이력 조회. MLflow 화면 경로는 확인하지 않음 |
