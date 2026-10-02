@@ -137,7 +137,12 @@ start .\harness\reports\af743566-1a0a-4ae1-8c70-15edd72b7c1e\scan.report.html
 
 ![Granite 3.3 8B 점검 리포트](images/7/02-granite-report.png)
 
+- 리포트의 각 행은 공격 유형(garak 모듈)이다. 모듈과 공격 유형의 대응은 기능 설명의 프로브 표와 같다(예: `latentinjection` = 간접 프롬프트 주입).
 - 리포트의 백분율은 garak이 모듈 단위로 계산한 방어율이고, DC-1~DC-5는 garak의 위험 등급이다(DC-1이 가장 위험).
+- 행을 펼치면 프로브별 점수 차트와 OWASP·AVID 태그가 나온다. 다음은 Qwen의 간접 프롬프트 주입을 펼친 화면이다. 방어율 67.5%는 공격 성공률 0.325에 해당하며, 태그 `owasp:llm01`은 OWASP LLM01(프롬프트 주입)을 뜻한다.
+
+![Qwen 리포트에서 간접 프롬프트 주입을 펼친 화면](images/7/03-qwen-report-latentinjection.png)
+
 - 리포트의 집계 방식은 EvalHub의 공격 성공률과 다르다. 예를 들어 Granite의 탈옥은 공격 성공률이 1.0이지만 리포트 방어율은 25%이다. 평가자는 판정에 EvalHub 수치(`redteam-compare`)를 사용하고, 리포트로 약한 모듈과 실제 응답을 확인한다.
 
 | 모델 | 공격 | 응답 (`scan.hitlog.jsonl` 발췌) |
