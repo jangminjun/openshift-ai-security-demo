@@ -152,7 +152,7 @@ cp local.env.example local.env   # OCP_API_URL / OCP_USER / OCP_PASSWORD 입력 
 | `scenario8-scan <이름> <HF 모델 ID>` / `scenario8-compare` | 코딩·챗봇·RAG 프로필 3종 동시 점검 / 프로필별 비교표 |
 | `scenario9-prep` / `-demo` / `-scan <이름>` / `-stop` | 탐지 모델 2개와 가드레일 게이트웨이 배포 / 공격 직접 비교 / 가드레일 경유 점검(결과는 `scenario7-compare`에 표시) / 제거 |
 | `scenario10-schedule [cron]` / `-trigger` / `-history` / `-unschedule` | 정기 점검 CronJob 등록 / 즉시 1회 실행 / MLflow 이력 조회 / 제거 |
-| `scenario11-run` | 번역 프로브만 지정한 `intents` 평가 실행 (중국어, 약 25분) |
+| `scenario11-run` | 번역 프로브만 지정한 `intents` 평가 실행 (중국어, 약 20~25분) |
 
 프로젝트 이름, DSC 이름 등 기본값은 [harness/config.env](harness/config.env)에 있고 환경 변수로 덮어쓸 수 있습니다.
 
@@ -172,4 +172,4 @@ RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다.
 | 8 | 확인됨 — 프로필 3종 점검, 실제 응답으로 오탐 확인 |
 | 9 | 확인됨 — 가드레일 구성, 차단 동작, 가드레일 경유 점검 |
 | 10 | 확인됨 — MLflow 기록, CronJob 제출, 이력 조회. MLflow 화면 경로는 확인하지 않음 |
-| 11 | 확인됨 — 번역 프로브 실행, 중국어 1,092건, 리포트. 한국어 등 다른 언어는 RHOAI 3.5.1 어댑터에서 지원하지 않음 |
+| 11 | 확인됨 — `scenario11-run` 실행 2회 재현(중국어 탈옥 성공 82~87%), 리포트. 한국어 등 다른 언어는 RHOAI 3.5.1 어댑터에서 지원하지 않음 |
