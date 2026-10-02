@@ -131,6 +131,18 @@ Dashboard의 **Develop & train** → **Experiments**에서도 MLflow 실험을 �
 
 점수는 하위 run(`<job ID>_0`)을 열어 **Model metrics** 탭에서 확인한다. 부모 run은 점검이 끝난 뒤에도 상태가 `RUNNING`(시계 아이콘)으로 남는다.
 
+EvalHub의 작업 목록은 Dashboard의 **Develop & train** → **Evaluations**(Tech Preview)에서 볼 수 있다.
+
+![Evaluations 화면 — EvalHub 작업 목록](images/10/05-evaluations.png)
+
+| 화면 | 데이터 출처 | 파드 재시작 후 | 용도 |
+|------|------|------|------|
+| Evaluations | EvalHub DB (파드 안 sqlite) | 사라짐 | 진행 중·최근 작업의 상태 확인 |
+| Experiments (MLflow) | MLflow DB + 리포트 파일 (PVC) | 유지 | 장기 이력 비교 |
+
+- 검증 환경에서 Evaluations 목록은 EvalHub 파드가 시작된 직후(22초 뒤)의 작업부터 19개만 보였다. 그 전에 실행한 작업(시나리오 7의 1차 점검, 시나리오 11의 1차 실행)은 파드 재시작과 함께 사라졌다.
+- Result 열은 `intents` 실행에만 전체 공격 성공률을 표시하고, `quick` 기반 점검(시나리오 7·8·9)에는 표시하지 않는다.
+
 ![AIP-default 실험의 run 목록](images/10/02-mlflow-aip-default-runs.png)
 
 ![AIP-default 실험의 run 상세 — 지표 없음, 파이프라인 태그만 기록](images/10/03-mlflow-aip-default-run-detail.png)
