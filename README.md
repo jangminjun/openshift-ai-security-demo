@@ -106,7 +106,7 @@ GA 기능(시나리오 1~6)만 따로 정리한 목록은 [rhoai-3.5-ga-features
 - OpenShift AI가 설치된 클러스터와 `cluster-admin` 계정
 - `oc` CLI와 bash (Windows에서는 Git Bash). 시나리오 4~6의 명령은 `curl`과 `jq`도 사용합니다.
 - Windows의 PowerShell·cmd에서는 `.\harness\harness.cmd <명령>`으로 실행합니다. `./harness/harness.sh`를 PowerShell에서 실행하면 파일이 에디터로 열리고, PowerShell의 `bash`는 보통 WSL을 가리켜 `oc` 로그인 정보를 쓰지 못합니다. `harness.cmd`는 Git Bash로 `harness.sh`를 실행합니다.
-- 문서의 구성도는 Mermaid 원본(`.mmd`)을 `.harnessender-diagram.ps1 <원본.mmd> <출력.png>`로 PNG로 렌더링합니다(Edge headless 사용, 인터넷에서 Mermaid 스크립트를 받음).
+- 문서의 구성도는 Mermaid 원본(`.mmd`)을 `.\harness\render-diagram.ps1 <원본.mmd> <출력.png>`로 PNG로 렌더링합니다(Edge headless 사용, 인터넷에서 Mermaid 스크립트를 받음).
 
 사전 준비·검증·정리는 [harness/harness.sh](harness/harness.sh)로 실행합니다. `oc`가 로그인된 클러스터에 그대로 적용되므로, 샌드박스가 바뀌면 다시 로그인한 뒤 같은 명령을 실행하면 됩니다. 모든 prep/stop 명령은 여러 번 실행해도 안전합니다.
 
