@@ -20,7 +20,7 @@
 | | 마크다운을 통한 데이터 유출 | `web_injection.MarkdownURIImageExfilExtended`, `StringAssemblyDataExfil` |
 | | 반복 발산 (학습 데이터 유출 징후) | `divergence.Repeat` |
 
-프로브는 garak이 제공한다(EvalHub 프로바이더 이미지에 포함). 프로필은 RHOAI가 제공하는 기능이 아니라, 이 저장소가 garak 프로브를 용도별로 묶어 `harness/config.env`의 `REDTEAM_PROFILE_*`에 정의한 것이다. harness는 EvalHub 평가 요청의 `probes` 파라미터로 프로필의 프로브 목록을 전달한다.
+프로브는 garak이 제공한다(EvalHub 프로바이더 이미지에 포함). 프로필은 RHOAI나 garak이 제공하는 기능이 아니라, 이 데모의 harness(`harness/`)가 garak 프로브를 용도별로 묶어 `harness/config.env`의 `REDTEAM_PROFILE_*`에 정의한 것이다. harness는 EvalHub 평가 요청의 `probes` 파라미터로 프로필의 프로브 목록을 전달한다.
 
 ## 사전 준비
 
