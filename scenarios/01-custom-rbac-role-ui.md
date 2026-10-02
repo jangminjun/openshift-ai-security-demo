@@ -35,30 +35,20 @@ oc get odhdashboardconfig odh-dashboard-config -n redhat-ods-applications -o jso
 
 ### 1) Project Settings → Roles 메뉴 이동
 
-1. `admin`은 Dashboard의 **Projects** → `Security Demo` → **Settings** → **Roles**로 이동한다.
-2. `admin`은 현재 프로젝트의 역할 목록을 보여 준다.
+`admin`은 Dashboard의 **Projects** → `Security Demo` → **Settings** → **Roles**에서 현재 역할 목록을 보여 준다.
 
 ![Create custom role 화면](images/01-create-custom-role.png)
 
 ### 2) Role 생성 위저드 진입
 
-1. `admin`은 **Create custom role** 화면에서 **Select role template**을 열고 `Workbench maintainer`를 선택한다.
-2. `admin`은 **Role configuration**에 역할 이름 `workbench-maintainer-custom`을 입력한다.
+`admin`은 **Create custom role**에서 **Select role template** → `Workbench maintainer`를 고르고, 역할 이름 `workbench-maintainer-custom`을 입력한다. 템플릿은 Workbench maintainer(관리), reader(조회), updater(업데이트) 세 가지이다.
 
 ![Select a role template 대화상자](images/02-select-role-template.png)
 
-| 템플릿 | 설명 |
-|--------|------|
-| Workbench maintainer | 워크벤치 컴포넌트의 관리자 역할 |
-| Workbench reader | 수정 권한 없이 워크벤치를 조회하는 역할 |
-| Workbench updater | 워크벤치 컴포넌트를 업데이트하는 역할 |
-
 ### 3) 폼 기반 권한 선택 → YAML 프리뷰 → 생성
 
-1. `admin`은 **Form** 보기에서 템플릿이 채운 권한을 확인한다.
-2. `admin`은 토글을 **YAML (read-only)** 로 바꿔 폼 선택이 `rules`로 변환된 결과를 보여 준다.
-3. `admin`은 역할을 생성한다.
-4. `admin`은 같은 방법으로 `Workbench reader` 템플릿에서 두 번째 역할을 생성한다.
+1. `admin`은 **Form** 보기에서 템플릿이 채운 권한을 확인하고, **YAML (read-only)** 로 바꿔 변환된 `rules`를 보여 준다.
+2. `admin`은 역할을 생성하고, 같은 방법으로 `Workbench reader` 역할도 만든다.
 
 ### 4) 일반 사용자에게 역할 부여
 
@@ -119,8 +109,6 @@ oc auth can-i create notebooks.kubeflow.org -n security-demo --as=wb-reader
 
 ## 운영 가이드
 
-- 프로젝트 관리자는 기본 역할로 부족한 세분화된 권한을 직접 설계할 수 있다.
-- YAML을 모르는 사용자는 폼으로 작성하고, YAML을 아는 사용자는 프리뷰로 검증한다.
-- 결과물은 표준 Kubernetes `Role`이므로 기존 감사·GitOps 체계와 호환된다.
-- 실제 제한은 Kubernetes RBAC가 강제한다. 사용자가 `oc`로 직접 접근해도 결과는 같다.
+- 프로젝트 관리자는 기본 역할로 부족한 세분화된 권한을 폼으로 설계하고 YAML 프리뷰로 검증한다.
+- 결과물은 표준 Kubernetes `Role`이므로 기존 감사·GitOps 체계와 호환되며, 사용자가 `oc`로 직접 접근해도 같은 제한이 적용된다.
 - 자동화: `harness/harness.sh scenario1-prep | scenario1-bind | scenario1-verify | scenario1-stop` (Windows: `.\harness\harness.cmd <명령>`)

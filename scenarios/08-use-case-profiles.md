@@ -24,7 +24,7 @@
 
 ## 사전 준비
 
-관리자는 레드티밍 환경(InferenceService, DataSciencePipelinesApplication, EvalHub)을 `redteam-demo` 프로젝트에 만든다. 일부 탐지기는 파이프라인 파드가 Hugging Face에서 내려받으므로 외부 접속이 필요하다.
+관리자는 `redteam-demo` 프로젝트에 레드티밍 환경을 만든다. 일부 탐지기는 Hugging Face에서 내려받으므로 클러스터에 외부 접속이 필요하다.
 
 ```bash
 ./harness/harness.sh redteam-prep
@@ -42,7 +42,7 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 ### 1) 용도별 점검 실행
 
-평가자는 대상 모델을 지정해 세 프로필을 동시에 점검한다. 결과는 `harness/reports/scenario8.tsv`와 MLflow 실험 `use-case-profiles`에 기록된다.
+평가자는 모델마다 세 프로필을 동시에 점검한다. 결과는 MLflow 실험 `use-case-profiles`에도 기록된다.
 
 ```bash
 ./harness/harness.sh scenario8-scan granite-3.3-8b ibm-granite/granite-3.3-8b-instruct

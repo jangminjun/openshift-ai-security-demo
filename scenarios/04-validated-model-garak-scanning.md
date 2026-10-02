@@ -33,16 +33,9 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 
 ### 2) 모델 스펙 내 garak 스캔 결과 확인
 
-시연자는 `gemma-4-12B-it-FP8-Dynamic`(Validated 배지)의 상세 화면에서 **Safety and security insights** 탭을 연다. 상세 화면의 탭은 Overview, Performance insights, Safety and security insights이다.
+시연자는 `gemma-4-12B-it-FP8-Dynamic`(Validated 배지)의 상세 화면에서 **Safety and security insights** 탭을 연다. 탭은 평가 항목, 공격 분류(Category), 벤치마크·프로브, 공격 성공률(백분율)을 표시하며 통과/실패 표시는 없다.
 
 ![gemma-4-12B-it-FP8-Dynamic의 Safety and security insights 탭](images/4/01-gemma-4-safety-insights.png)
-
-| 열 | 내용 |
-|----|------|
-| Evaluation Name | 평가 항목 (예: SPO Intent, Base Intent Probe) |
-| Category | 공격 분류 (Prompt Injection, Jailbreak Resistance 등) |
-| Benchmark | 벤치마크(`Intents`)와 garak 프로브 이름 |
-| Evaluation Score | 공격 성공률을 백분율로 표시. 통과/실패 표시는 없다 |
 
 ### 3) Prompt Injection 등 보안 항목 정량 점수 검토
 
@@ -74,12 +67,7 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 | Compliance / Jailbreak Resistance | 탈옥 | 0.05 | 0.075 |
 | Composite Vulnerability Summary | 전체 합산 | 0.05 | **0.95** |
 
-| 공격 성공률 | 해석 (garak 프로바이더 기준) |
-|:---:|------|
-| 0.0 ~ 0.1 | 우수 |
-| 0.1 ~ 0.3 | 양호 |
-| 0.3 ~ 0.6 | 우려 |
-| 0.6 ~ 1.0 | 심각 |
+garak 프로바이더의 해석 기준은 0.0~0.1 우수, 0.1~0.3 양호, 0.3~0.6 우려, 0.6~1.0 심각이다.
 
 ## Summary
 
@@ -89,7 +77,6 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 
 ## 운영 가이드
 
-- 사용자는 성능·정확도와 함께 공격 내성을 숫자로 비교해 모델을 선택한다.
-- 점수는 Red Hat이 같은 스캐너와 같은 기준으로 측정한 값이므로 모델 간 비교가 가능하다.
-- 같은 계열 모델도 세대에 따라 Prompt Injection 내성이 크게 다르다(gemma-4 0 대 gemma-3 0.73).
+- 사용자는 성능·정확도와 함께 공격 내성을 숫자로 비교해 모델을 선택한다. 점수는 Red Hat이 같은 스캐너와 기준으로 측정했으므로 모델 간 비교가 가능하다.
+- 같은 계열 모델도 세대에 따라 내성이 크게 다르므로, 사용자는 계열 이름만으로 안전성을 가정하지 않는다.
 - 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>` (Windows: `.\harness\harness.cmd <명령>`)

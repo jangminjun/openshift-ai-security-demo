@@ -65,7 +65,7 @@ Windows (PowerShell):
 
 ### 2) 가드레일 적용 전 점검
 
-평가자는 표준 프로브 8종(탈옥, 프롬프트 주입, 간접 주입, 인코딩 우회, 악성코드, 역할극 정보 유출, 마크다운 데이터 유출, SQL 출력)으로 대상 모델을 점검한다.
+평가자는 시나리오 7의 표준 프로브 8종으로 대상 모델을 점검한다. 시나리오 7의 Granite 점검 결과가 있으면 이 단계는 생략한다.
 
 ```bash
 ./harness/harness.sh redteam-check granite-3.3-8b ibm-granite/granite-3.3-8b-instruct

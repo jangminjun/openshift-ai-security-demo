@@ -45,21 +45,13 @@ DB_USER:      4 bytes
 ### 2) 워크벤치 생성 UI에서 Existing secret 선택
 
 1. 사용자는 **Workbenches** → **Create workbench**에서 이름 `secret-demo-wb`를 입력한다.
-2. 사용자는 **Environment variables**에서 **Variable type**을 **Secret**으로 고르고 **Existing secret**을 선택한다.
-3. 사용자는 **Search secrets** 목록에서 `external-db-credentials`를 체크한다.
+2. 사용자는 **Environment variables**에서 **Variable type** → **Secret** → **Existing secret**을 고르고, `external-db-credentials`를 체크한다. 목록은 키 이름(`3 keys: DB_HOST, DB_PASSWORD, DB_USER`)만 보여 주고 값은 보여 주지 않는다.
 
 ![Environment variables — Existing secret 선택](images/2/01-existing-secret.png)
 
-| 화면 요소 | 의미 |
-|-----------|------|
-| Key / value, Upload | 새 값을 입력하는 방식 |
-| Existing secret | 기존 Secret을 참조하는 방식 |
-| `3 keys: DB_HOST, DB_PASSWORD, DB_USER` | 키 이름만 표시하고 값은 표시하지 않음 |
-
 ### 3) 값 노출 없이 키를 환경 변수로 연결
 
-1. 사용자는 Secret 단위로 체크한다. Dashboard는 Secret의 키마다 같은 이름의 환경 변수를 만들고, 각 변수에 값 대신 Secret과 키에 대한 참조(`secretKeyRef`)를 기록한다.
-2. 사용자는 워크벤치를 생성하고 Running 상태가 될 때까지 기다린다.
+Dashboard는 Secret의 키마다 같은 이름의 환경 변수를 만들고, 값 대신 참조(`secretKeyRef`)를 기록한다. 사용자는 워크벤치를 생성하고 Running 상태를 기다린다.
 
 ## 결과 확인
 
@@ -113,7 +105,6 @@ oc get secret -n security-demo
 
 ## 운영 가이드
 
-- 자격 증명의 원본은 Vault나 External Secrets에 두고, 워크벤치는 참조만 한다. 값은 복제되지 않는다.
-- 데이터 사이언티스트는 값을 보지 않고 Secret을 연결한다.
+- 자격 증명의 원본은 Vault나 External Secrets에 두고, 데이터 사이언티스트는 값을 보지 않고 참조만 연결한다.
 - 원본 Secret이 로테이션되면 사용자는 워크벤치를 재시작해 새 값을 반영한다. 화면에도 이 안내가 표시된다.
 - 자동화: `harness/harness.sh scenario2-prep | scenario2-verify | scenario2-stop` (Windows: `.\harness\harness.cmd <명령>`)
