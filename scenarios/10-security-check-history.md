@@ -125,7 +125,11 @@ Dashboard의 **Develop & train** → **Experiments**에서도 MLflow 실험을 �
 | `use-case-profiles` | 시나리오 8의 프로필 점검 | 위와 같음 |
 | `redteam-security-checks` | 초기 연결 테스트 | — |
 
-점검 1회는 `model-security-checks`에 run 2개를 만든다. 작업 단위의 부모 run에는 지표가 없고, 벤치마크 단위의 하위 run(`<job ID>_0`)에 지표가 있다.
+점검 1회는 `model-security-checks`에 run 2개를 만든다. 작업 단위의 부모 run(`check-<모델>`)에는 지표가 없고, 벤치마크 단위의 하위 run(`<job ID>_0`)에 지표 10개(공격 유형별 8개, 전체 공격 성공률 등)가 있다.
+
+![model-security-checks 실험의 run 목록 — 부모 run(check-…)과 하위 run(job ID)](images/10/04-mlflow-model-security-checks-runs.png)
+
+점수는 하위 run(`<job ID>_0`)을 열어 **Model metrics** 탭에서 확인한다. 부모 run은 점검이 끝난 뒤에도 상태가 `RUNNING`(시계 아이콘)으로 남는다.
 
 ![AIP-default 실험의 run 목록](images/10/02-mlflow-aip-default-runs.png)
 

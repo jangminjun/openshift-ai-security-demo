@@ -128,7 +128,7 @@
 
 - 정기 점검의 요청 본문은 등록 시점에 만들어지며 대상은 엔드포인트 주소로 고정된다. 이력의 모델 이름은 `scheduled`로 표시된다. 모델을 바꾼 경우 `scenario10-schedule`을 다시 실행한다.
 - EvalHub는 점수를 Prometheus 지표로 내보내지 않는다. 점수 기반 경보는 별도 구현이 필요하다.
-- MLflow 서비스는 클러스터 외부에 노출되어 있지 않다. `scenario10-history`는 EvalHub 파드 안에서 MLflow API를 호출한다. MLflow의 Dashboard 화면 경로는 확인하지 않았다.
+- MLflow 서비스는 클러스터 외부에 노출되어 있지 않다. `scenario10-history`는 EvalHub 파드 안에서 MLflow API를 호출한다. Dashboard에서는 **Develop & train** → **Experiments**(프로젝트 선택)로 실험과 run을 볼 수 있다.
 - EvalHub가 만드는 작업 단위의 상위 run은 상태가 `RUNNING`으로 남는다. 점수가 담긴 하위 run은 `FINISHED`로 종료된다.
 - RHOAI 운영자는 EvalHub에 MLflow 토큰과 작업 공간을 설정하지만 서버 주소(`MLFLOW_TRACKING_URI`)는 비워 둔다. 관리자는 EvalHub CR의 `spec.env`에 주소를 넣어야 한다.
 
