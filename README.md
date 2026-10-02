@@ -30,7 +30,7 @@ GA 기능(시나리오 1~6)만 따로 정리한 목록은 [rhoai-3.5-ga-features
 | # | 시나리오 | 무엇을 보여주나 | 시연 방식 | 문서 |
 |---|----------|-----------------|-----------|------|
 | 7 | 모델 보안 점검: 배포해도 되는 모델인가 | 후보 모델들을 같은 시험지로 점검해 취약한 모델을 골라내는 절차 (시나리오 5 기능 활용) | CLI + 리포트 | [07-model-security-check.md](scenarios/07-model-security-check.md) |
-| 8 | 용도별 점검 프로필 | 코딩 어시스턴트 / 고객 상담 챗봇 / RAG·에이전트에 맞춘 garak 시험지와 오탐 거르기 | CLI + 리포트 | [08-use-case-profiles.md](scenarios/08-use-case-profiles.md) |
+| 8 | 용도별 점검 프로필 | 코딩 어시스턴트 / 고객 상담 챗봇 / RAG·에이전트에 맞춰 garak 프로브를 묶은 시험지(데모용 임의 그룹핑)와 오탐 거르기 | CLI + 리포트 | [08-use-case-profiles.md](scenarios/08-use-case-profiles.md) |
 | 9 | 가드레일 적용 전후 비교 | TrustyAI Guardrails로 방어막을 씌우고 같은 점검으로 개선 효과를 숫자로 증명 | CLI + 리포트 | [09-guardrails-before-after.md](scenarios/09-guardrails-before-after.md) |
 | 10 | 점검 이력 관리와 정기 점검 | 점검 결과를 MLflow에 영구 기록하고 CronJob으로 주기적 재점검 | CLI + MLflow | [10-security-check-history.md](scenarios/10-security-check-history.md) |
 | 11 | 멀티랭귀지 안전성 평가 | 영어로 거절된 공격을 다른 언어(중국어)로 다시 시도해 언어 간 방어 격차 점검 | CLI + 리포트 | [11-multilingual-safety.md](scenarios/11-multilingual-safety.md) |
