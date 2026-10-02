@@ -42,6 +42,9 @@
 #   scenario5-cancel <job-id>  cancel a scan in EvalHub AND stop its pipeline run (EvalHub alone leaves it running)
 #   scenario5-stop        delete the red teaming project (frees the GPU)
 #
+#   redteam-prep / -status / -report / -cancel / -stop   same as the scenario5-* commands
+#   redteam-check <label> <hf-model-id> / redteam-compare same as scenario7-scan / scenario7-compare
+#
 #   scenario7-scan <label> <hf-model-id>  swap the target to a candidate model and run the standard probe set
 #   scenario7-compare     side-by-side attack success rates of every recorded candidate (uses scenario5-prep's setup)
 #
@@ -914,6 +917,15 @@ case "$cmd" in
   scenario5-stop)    cmd_scenario5_stop ;;
   scenario7-scan)    cmd_scenario7_scan "$@" ;;
   scenario7-compare) cmd_scenario7_compare ;;
+  # Scenario-neutral names for the shared red teaming environment, so each
+  # scenario document can stand on its own.
+  redteam-prep)      cmd_scenario5_prep ;;
+  redteam-status)    cmd_scenario5_status "$@" ;;
+  redteam-report)    cmd_scenario5_report "$@" ;;
+  redteam-cancel)    cmd_scenario5_cancel "$@" ;;
+  redteam-stop)      cmd_scenario5_stop ;;
+  redteam-check)     cmd_scenario7_scan "$@" ;;
+  redteam-compare)   cmd_scenario7_compare ;;
   scenario9-prep)    cmd_scenario9_prep ;;
   scenario9-demo)    cmd_scenario9_demo ;;
   scenario9-scan)    cmd_scenario9_scan "$@" ;;

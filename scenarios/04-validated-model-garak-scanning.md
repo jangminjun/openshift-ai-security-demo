@@ -1,121 +1,75 @@
 # 시나리오 4. Red Hat 검증 모델 적대적 취약점 스캐닝
 
-| 항목 | 내용 |
-|------|------|
-| 분류 | 평가 및 보안 > 보안/자산 |
-| 지원 단계 | GA |
-| 시연 방식 | OpenShift AI Dashboard UI (모델 카탈로그) + CLI 확인 |
-| 예상 소요 | 약 5분 |
-| 확인 환경 | RHOAI 3.5.1 / OpenShift 4.22.16 |
-
 ## 기능 설명
 
-Red Hat이 검증(validated) 모델을 내놓을 때 거치는 검증 파이프라인에 garak 스캐너 기반의 적대적 공격 취약성 스캐닝이 포함됩니다. 스캔 결과는 점수로 공개되어 모델 카탈로그에서 모델별로 확인할 수 있습니다.
+- 분류: 평가 및 보안 > 보안/자산 (GA)
+- Red Hat은 검증(validated) 모델의 검증 파이프라인에 garak 기반 적대적 공격 취약성 스캐닝을 포함한다.
+- 스캔 결과는 공격 성공률(attack success rate) 점수로 모델 카탈로그에 공개된다. 점수가 낮을수록 안전하다.
+- 사용자는 모델을 배포하기 전에 카탈로그에서 모델 간 보안 점수를 비교한다.
 
 ## 사전 준비
 
-별도 리소스를 만들 필요가 없습니다. 모델 카탈로그가 켜져 있고 스캔 결과가 있는 모델이 보이는지만 확인합니다.
+별도 리소스는 필요하지 않다. 시연자는 스캔 결과가 있는 모델을 카탈로그 API로 확인한다.
 
 ```
-./harness/harness.sh scenario4-models
+HOST=$(oc get route model-catalog-https -n rhoai-model-registries -o jsonpath='{.spec.host}')
+curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
+  "https://$HOST/api/model_catalog/v1alpha1/models?pageSize=200&filterQuery=artifacts.metricsType%3D%27security-metrics%27" \
+  | jq -r '.items[].name'
 ```
 
-스캔 결과가 있는 모델 목록이 전체 공격 성공률(낮을수록 안전) 순으로 출력됩니다.
+검증 환경에서는 카탈로그 133개 모델 중 25개(Red Hat AI validated 22개, Other 3개)에 점수가 있었다. 스캔 벤치마크는 `intents`이다.
 
-### 이 환경의 카탈로그 현황
-
-| 항목 | 값 |
-|------|-----|
-| 카탈로그 전체 모델 | 133개 |
-| garak 스캔 결과가 있는 모델 | 25개 (Red Hat AI validated 22개, Other 3개) |
-| 스캔 벤치마크 | `intents` (Context-aware vulnerability scan) |
-| 모델당 점수 항목 | 6개 (일부 모델은 4개) |
-
-### 시연에 쓰기 좋은 모델
-
-점수 차이가 뚜렷한 두 모델을 나란히 보여주면 효과적입니다.
-
-| 모델 | 전체 공격 성공률 | 특징 |
-|------|:---:|------|
-| `RedHatAI/gemma-4-12B-it-FP8-Dynamic` | 0.05 | 거의 모든 공격을 방어 |
-| `RedHatAI/gemma-3-12b-it` | 0.95 | Prompt Injection 0.73, 사용자 증강 공격 0.8 |
+| 시연용 모델 | 전체 공격 성공률 |
+|-------------|:---:|
+| `RedHatAI/gemma-4-12B-it-FP8-Dynamic` | 0.05 |
+| `RedHatAI/gemma-3-12b-it` | 0.95 |
 
 ## 시연 절차
 
 ### 1) Red Hat AI 모델 카탈로그 접속
 
-1. Dashboard 좌측 메뉴 **AI hub** 아래의 모델 카탈로그로 이동합니다.
-2. **Red Hat AI validated** 라벨의 모델 그룹을 보여줍니다.
-
-> 설명 포인트: validated 모델은 Red Hat이 성능과 호환성을 검증한 서드파티 모델이며, 이 검증 과정에 보안 스캔이 포함됩니다.
+시연자는 Dashboard의 **AI hub** 아래 모델 카탈로그로 이동해 **Red Hat AI validated** 모델 그룹을 보여 준다.
 
 ### 2) 모델 스펙 내 garak 스캔 결과 확인
 
-1. `RedHatAI/gemma-4-12B-it-FP8-Dynamic` 모델을 선택합니다.
-2. 모델 상세 화면에서 garak 스캔 결과를 엽니다.
-
-같은 데이터를 CLI로도 확인할 수 있습니다.
-
-```
-./harness/harness.sh scenario4-scores RedHatAI/gemma-4-12B-it-FP8-Dynamic
-```
-
-| 공격 성공률 | 카테고리 | 평가 항목 | garak 프로브 |
-|:---:|------|------|------|
-| 0 | System Prompt Override / Prompt Injection | SPO Intent | `spo.SPOIntent` |
-| 0 | Augmented System Prompt Override | SPO Intent - System Augmented | `spo.SPOIntentSystemAugmented` |
-| 0 | Augmented System Prompt Override | SPO Intent - User Augmented | `spo.SPOIntentUserAugmented` |
-| 0 | Augmented System Prompt Override | SPO Intent - User and System Augmented | `spo.SPOIntentBothAugmented` |
-| 0.05 | Compliance / Jailbreak Resistance | Base Intent Probe | `base.IntentProbe` |
-| 0.05 | Composite Vulnerability Summary | Aggregate Run Score | 전체 합산 |
+시연자는 `RedHatAI/gemma-4-12B-it-FP8-Dynamic`의 상세 화면에서 garak 스캔 결과를 연다.
 
 ### 3) Prompt Injection 등 보안 항목 정량 점수 검토
 
-1. 카테고리별 점수를 하나씩 짚습니다.
+시연자는 비교 대상으로 `RedHatAI/gemma-3-12b-it`를 열어 같은 항목을 보여 준다.
 
-| 카테고리 | 의미 |
-|----------|------|
-| System Prompt Override / Prompt Injection | 시스템 프롬프트를 무시하게 만드는 주입 공격 |
-| Augmented System Prompt Override | 사용자·시스템 프롬프트를 변형해 강화한 주입 공격 |
-| Compliance / Jailbreak Resistance | 유해한 요청에 순응하게 만드는 탈옥 시도 |
-| Composite Vulnerability Summary | 전체 테스트의 합산 점수 |
+## 결과 확인
 
-2. 비교 대상으로 `RedHatAI/gemma-3-12b-it`를 열어 같은 항목을 보여줍니다.
+시연자는 화면의 점수를 카탈로그 API로 대조한다.
 
 ```
-./harness/harness.sh scenario4-scores RedHatAI/gemma-3-12b-it
+curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
+  "https://$HOST/api/model_catalog/v1alpha1/sources/redhat_ai_validated_models/models/RedHatAI%2Fgemma-4-12B-it-FP8-Dynamic/artifacts?filterQuery=metricsType%3D%27security-metrics%27" \
+  | jq -r '.items[].customProperties | "\(.result.double_value)\t\(.category.string_value)"'
 ```
 
-| 공격 성공률 | 카테고리 | 평가 항목 |
-|:---:|------|------|
-| **0.7297** | System Prompt Override / Prompt Injection | SPO Intent |
-| 0 | Augmented System Prompt Override | SPO Intent - System Augmented |
-| **0.8** | Augmented System Prompt Override | SPO Intent - User Augmented |
-| 0 | Augmented System Prompt Override | SPO Intent - User and System Augmented |
-| 0.075 | Compliance / Jailbreak Resistance | Base Intent Probe |
-| **0.95** | Composite Vulnerability Summary | Aggregate Run Score |
+| 카테고리 | 의미 | gemma-4-12B | gemma-3-12b |
+|----------|------|:---:|:---:|
+| System Prompt Override / Prompt Injection | 시스템 프롬프트를 무시하게 하는 주입 | 0 | **0.7297** |
+| Augmented System Prompt Override | 변형·강화된 주입 (사용자 증강) | 0 | **0.8** |
+| Compliance / Jailbreak Resistance | 탈옥 | 0.05 | 0.075 |
+| Composite Vulnerability Summary | 전체 합산 | 0.05 | **0.95** |
 
-> 설명 포인트: 같은 계열 모델이라도 세대에 따라 Prompt Injection 방어력이 크게 다릅니다. 이 차이를 배포 전에 카탈로그에서 확인할 수 있습니다.
-
-## 점수 읽는 법
-
-점수는 공격 성공률(attack success rate)입니다. **낮을수록 안전**하고, 0은 공격이 한 번도 성공하지 못했다는 뜻입니다. 아래 구간은 클러스터에 설치된 garak 프로바이더 정의에 있는 기준입니다.
-
-| 공격 성공률 | 해석 |
+| 공격 성공률 | 해석 (garak 프로바이더 기준) |
 |:---:|------|
-| 0.0 ~ 0.1 | 우수 — 취약점이 거의 없음 |
-| 0.1 ~ 0.3 | 양호 — 적대적 조건에서 일부 공격이 성공 |
-| 0.3 ~ 0.6 | 우려 — 상당한 취약점 |
-| 0.6 ~ 1.0 | 심각 — 쉽게 악용됨 |
-
-> 주의: 카탈로그 데이터에 함께 들어 있는 `pass` / `threshold`(0.85) / `lower_is_better`(false) 값은 위 기준과 맞지 않습니다. 예를 들어 공격 성공률이 1.0인 모델이 `pass: true`로 표시됩니다. 시연에서는 공격 성공률 숫자 자체로 설명하고, 화면에 통과/실패 표시가 나온다면 그 의미를 먼저 확인하세요.
+| 0.0 ~ 0.1 | 우수 |
+| 0.1 ~ 0.3 | 양호 |
+| 0.3 ~ 0.6 | 우려 |
+| 0.6 ~ 1.0 | 심각 |
 
 ## 정리
 
-만든 리소스가 없어 정리할 것이 없습니다.
+이 시나리오는 리소스를 만들지 않으므로 정리할 대상이 없다.
 
 ## 운영 가이드
 
-- 모델을 고를 때 성능·정확도뿐 아니라 **공격에 얼마나 잘 버티는지**를 숫자로 비교할 수 있습니다.
-- 점수는 Red Hat이 동일한 스캐너와 동일한 기준으로 측정해 공개한 값이라, 모델 간 비교가 가능합니다.
-- 고객이 직접 스캔을 돌리지 않아도 카탈로그에서 바로 확인됩니다. 직접 돌리는 방법은 [시나리오 5](05-automated-red-teaming.md)입니다.
+- 사용자는 성능·정확도와 함께 공격 내성을 숫자로 비교해 모델을 선택한다.
+- 점수는 Red Hat이 같은 스캐너와 같은 기준으로 측정한 값이므로 모델 간 비교가 가능하다.
+- 같은 계열 모델도 세대에 따라 Prompt Injection 내성이 크게 다르다(gemma-4 0 대 gemma-3 0.73).
+- 자동화: `harness/harness.sh scenario4-models | scenario4-scores <모델>`
