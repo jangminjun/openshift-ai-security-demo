@@ -90,13 +90,26 @@ Windows (PowerShell):
 
 ```bash
 ./harness/harness.sh redteam-report <job-id>
+xdg-open harness/reports/<job-id>/scan.report.html     # macOS: open
 ```
 
 Windows (PowerShell):
 
 ```powershell
 .\harness\harness.cmd redteam-report <job-id>
+start .\harness\reports\<job-id>\scan.report.html
 ```
+
+검증 환경의 2차 점검 리포트는 다음 명령으로 받고 연다.
+
+```powershell
+.\harness\harness.cmd redteam-report e9d16595-5819-4e3b-80a6-5e60ce2d9b26
+start .\harness\reports\e9d16595-5819-4e3b-80a6-5e60ce2d9b26\scan.report.html
+.\harness\harness.cmd redteam-report af743566-1a0a-4ae1-8c70-15edd72b7c1e
+start .\harness\reports\af743566-1a0a-4ae1-8c70-15edd72b7c1e\scan.report.html
+```
+
+첫 두 줄은 Qwen, 나머지 두 줄은 Granite의 리포트이다. 리포트는 파이프라인 서버의 MinIO에 남아 있는 동안 받을 수 있다.
 
 ## 결과 확인
 

@@ -100,12 +100,14 @@ oc get workflow -n redteam-demo
 
 ```bash
 ./harness/harness.sh redteam-report <job-id>
+xdg-open harness/reports/<job-id>/scan.intents.html     # macOS: open
 ```
 
 Windows (PowerShell):
 
 ```powershell
 .\harness\harness.cmd redteam-report <job-id>
+start .\harness\reports\<job-id>\scan.intents.html
 ```
 
 ## 결과 확인
