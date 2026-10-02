@@ -6,6 +6,7 @@
 - TrustyAI EvalHub는 배포된 모델에 적대적 프롬프트를 자동으로 주입하는 garak 기반 안전성 평가를 실행하고, 안전성 침해 요인을 리포트로 만든다. 평가는 KFP 파이프라인과 폐쇄망(air-gapped) 실행을 지원한다.
 - 결과 지표는 공격 성공률이며, 프로바이더의 통과 기준은 0.3 이하이다.
 - EvalHub는 평가 작업을 관리하는 서비스이고, garak은 공격 프롬프트를 보내고 응답을 판정하는 스캔(자동 침투 테스트) 엔진이다. EvalHub는 평가마다 garak 어댑터가 든 Job 파드를 만들어 실행을 맡긴다.
+- garak 전용 오퍼레이터는 없다. RHOAI 오퍼레이터의 TrustyAI 구성 요소(DSC `trustyai: Managed`)가 `EvalHub` CR을 처리하며, CR의 `providers`에 `garak`·`garak-kfp`를 지정하면 Red Hat이 빌드한 garak 이미지(`odh-trustyai-garak-lls-provider-dsp-rhel9`)로 평가가 실행된다.
 
 ![EvalHub와 garak의 구성](images/5/00-evalhub-architecture.png)
 
