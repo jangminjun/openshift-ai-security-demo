@@ -1,0 +1,29 @@
+%% Source of 00-openshell-architecture.png. Re-render:
+%% harness/render-diagram.sh scenarios/images/20/openshell-architecture.mmd scenarios/images/20/00-openshell-architecture.png
+flowchart LR
+  CLI["시연자 PC<br/>openshell CLI<br/>(클라이언트 인증서)"]
+
+  subgraph OPS["openshift-operators"]
+    AS["Agent Sandbox controller<br/>(agent-sandbox-operator)<br/>Sandbox CRD"]
+  end
+
+  subgraph NS["openshell"]
+    direction TB
+    GW["OpenShell 게이트웨이<br/>openshell-0 (StatefulSet)<br/>정책·프로바이더·로그"]
+    CR["Sandbox CR<br/>default--&lt;이름&gt;"]
+    subgraph SBP["샌드박스 Pod"]
+      AG["agent 컨테이너<br/>(사용자 이미지)<br/>restricted-v2 SCC<br/>Landlock · seccomp<br/>투명 프록시"]
+    end
+    SV["supervisor Pod<br/>os-supervisor-*"]
+    NP["NetworkPolicy<br/>sandbox-ssh / workloads<br/>/ supervisors"]
+  end
+
+  EXT["외부 목적지<br/>(인터넷, 사내 모델)"]
+
+  CLI -->|"① oc port-forward<br/>mTLS :8080"| GW
+  GW -->|"② Sandbox CR 생성"| CR
+  AS -->|"③ Pod 생성"| SBP
+  CR -.-> AS
+  GW -->|"④ 정책 배포"| SV
+  SV -.->|"정책 적용·감시"| AG
+  AG -->|"⑤ 정책이 허용한<br/>연결만"| EXT

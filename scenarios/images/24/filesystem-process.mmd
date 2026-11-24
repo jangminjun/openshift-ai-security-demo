@@ -1,0 +1,19 @@
+%% Source of 00-filesystem-process.png. Re-render:
+%% harness/render-diagram.sh scenarios/images/24/filesystem-process.mmd scenarios/images/24/00-filesystem-process.png
+flowchart LR
+  POL["policy-fs.yaml<br/>샌드박스 시작 시<br/>Landlock 규칙 고정"]
+  UPD["실행 중 정책 변경<br/>(/etc 쓰기 허용)<br/>표시: Loaded<br/>실제: 계속 거부"]
+  AG["에이전트 프로세스<br/>UID 1001020000<br/>capability 없음<br/>SA 토큰 마운트 안 됨"]
+
+  subgraph LL["Landlock"]
+    direction TB
+    RW["읽기·쓰기<br/>/sandbox /tmp /dev/null"]
+    RO["읽기 전용<br/>/bin /usr /lib /lib64 /etc<br/>/opt /proc /dev/urandom"]
+    NO["접근 불가<br/>/root /var/lib<br/>/proc/1/environ"]
+  end
+
+  POL --> LL
+  UPD -.->|"반영 안 됨"| LL
+  AG -->|"허용"| RW
+  AG -->|"읽기만"| RO
+  AG -.->|"Permission denied"| NO

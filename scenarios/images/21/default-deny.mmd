@@ -1,0 +1,19 @@
+%% Source of 00-default-deny.png. Re-render:
+%% harness/render-diagram.sh scenarios/images/21/default-deny.mmd scenarios/images/21/00-default-deny.png
+flowchart LR
+  subgraph SB["샌드박스 Pod"]
+    direction TB
+    P1["curl<br/>example.com:443"]
+    P2["python3<br/>urlopen(example.com)"]
+    PX["투명 프록시<br/>(DNS · TCP 가로채기)"]
+    P1 --> PX
+    P2 --> PX
+  end
+  POL{"정책에<br/>목적지가<br/>있는가?"}
+  EXT["example.com"]
+  LOG["OCSF 로그<br/>NET:REFUSE DENIED<br/>NET:OPEN DENIED"]
+
+  PX --> POL
+  POL -->|"있음"| EXT
+  POL -->|"없음 (기본값)"| X["연결 거부<br/>curl: HTTP 000<br/>python: Errno 13"]
+  X --> LOG

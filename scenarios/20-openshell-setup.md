@@ -9,6 +9,16 @@
 - OpenShell 게이트웨이는 에이전트마다 Pod 하나를 만들고, 그 안에서 Landlock(파일), seccomp(시스템 콜), 네트워크 네임스페이스와 투명 프록시(네트워크)로 에이전트를 격리한다.
 - 이 문서는 시나리오 21~25가 공통으로 사용하는 게이트웨이와 CLI를 구성한다.
 
+![OpenShell 구성도](images/20/00-openshell-architecture.png)
+
+| 순서 | 동작 |
+|:---:|------|
+| ① | 시연자는 `oc port-forward`로 게이트웨이에 접속하고, CLI는 클라이언트 인증서(mTLS)로 인증한다 |
+| ② | 게이트웨이는 `openshell sandbox create` 요청을 받아 `Sandbox` CR(`default--<이름>`)을 만든다 |
+| ③ | Agent Sandbox controller는 CR을 보고 샌드박스 Pod를 만든다 |
+| ④ | 게이트웨이는 supervisor Pod에 정책을 배포하고, supervisor는 샌드박스의 정책 적용을 감시한다 |
+| ⑤ | 샌드박스의 에이전트는 정책이 허용한 목적지로만 연결할 수 있다 |
+
 | 구성 요소 | 역할 |
 |------|------|
 | Agent Sandbox operator (`agent-sandbox-operator`, Red Hat build) | `Sandbox`, `SandboxTemplate`, `SandboxClaim`, `SandboxWarmPool` CRD와 컨트롤러 제공 |
@@ -91,10 +101,35 @@ openshell status
 ## 결과 확인
 
 ```
-oc get csv -n openshift-operators | grep agent-sandbox
-oc get pods -n openshell
-oc get networkpolicy -n openshell
-openshell status
+$ oc get csv -n openshift-operators | grep agent-sandbox
+agent-sandbox-operator.v0.9.0   Red Hat build of Agent Sandbox   0.9.0   Succeeded
+
+$ oc get crd | grep agents.x-k8s.io
+sandboxclaims.extensions.agents.x-k8s.io      2026-11-24T01:12:53Z
+sandboxes.agents.x-k8s.io                     2026-11-24T01:12:53Z
+sandboxtemplates.extensions.agents.x-k8s.io   2026-11-24T01:12:53Z
+sandboxwarmpools.extensions.agents.x-k8s.io   2026-11-24T01:12:53Z
+
+$ oc get pods,pvc -n openshell
+NAME              READY   STATUS    RESTARTS   AGE
+pod/openshell-0   1/1     Running   0          11s
+NAME                                               STATUS   CAPACITY   STORAGECLASS
+persistentvolumeclaim/openshell-data-openshell-0   Bound    1Gi        gp3-csi
+
+$ oc get networkpolicy -n openshell
+NAME                            POD-SELECTOR
+openshell-sandbox-ssh           openshell.ai/managed-by=openshell
+openshell-sandbox-supervisors   openshell.ai/boundary-role=supervisor
+openshell-sandbox-workloads     openshell.ai/boundary-role=workload
+
+$ openshell status
+Server Status
+
+  Gateway: openshift
+  Server: https://127.0.0.1:8080
+  Status: Connected
+  Authentication: Authenticated (mTLS transport)
+  Version: 0.1.9
 ```
 
 | 확인 항목 | 기대 결과 | 검증 결과 |
@@ -125,5 +160,6 @@ rm -rf ~/.config/openshell/gateways/openshift
 - 인증 없이 접속을 허용하는 `server.auth.allowUnauthenticatedUsers=true`는 클러스터 안의 누구나 게이트웨이를 조작할 수 있게 하므로 사용하지 않는다.
 - 다시 설치할 때는 이전 설치의 Secret(`openshell-server-tls`, `openshell-client-tls`, `openshell-jwt-keys`, `openshell-credential-storage-key-encryption-key`)을 먼저 지워야 새 인증서 SAN이 반영된다.
 - OpenShell은 RHOAI 3.5에서 Developer Preview이다. 차트 버전은 자료마다 다르므로(블로그 0.0.85, 문서 0.1.9), 운영자는 CLI와 차트 버전을 고정하고 함께 올린다.
+- `oc port-forward`는 유휴 상태나 연결 오류 후 끊긴다(`lost connection to pod`). 시연 중에는 `while true; do oc -n openshell port-forward svc/openshell 8080:8080; sleep 1; done`처럼 자동으로 다시 연결하게 둔다.
 - 외부 노출이 필요하면 port-forward 대신 passthrough Route(`openshiftRoute.enabled`)와 cert-manager, OIDC를 구성한다.
 - 게이트웨이는 샌드박스 로그를 메모리에 최근 2,000줄만 보관한다. 감사 목적이면 `server.ocsfLog.enabled=true`와 영구 볼륨으로 OCSF JSONL을 남기고 SIEM으로 보낸다.

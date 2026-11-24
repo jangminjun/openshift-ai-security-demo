@@ -1,0 +1,28 @@
+%% Source of 00-network-policy.png. Re-render:
+%% harness/render-diagram.sh scenarios/images/22/network-policy.mmd scenarios/images/22/00-network-policy.png
+flowchart LR
+  ADM["운영자<br/>openshell policy update<br/>--add-endpoint<br/>api.github.com:443:<br/>read-only:rest:enforce"]
+  GW["게이트웨이<br/>정책 버전 2 저장"]
+  SB["샌드박스 (sb-net)<br/>정책 재적재<br/>Pod 재시작 없음"]
+
+  subgraph CHK["요청별 판정"]
+    direction TB
+    L4{"L4<br/>호스트·포트·바이너리<br/>일치?"}
+    L7{"L7<br/>HTTP 메서드<br/>read-only 허용?"}
+  end
+
+  A["(a) curl GET /zen"]
+  B["(b) curl POST /user/repos"]
+  C["(c) python3 GET /zen"]
+  OK["허용 · HTTP 200"]
+  D7["거부 · HTTP 403<br/>policy_denied (l7)"]
+  D4["연결 거부<br/>Errno 13"]
+
+  ADM --> GW --> SB
+  A --> L4
+  B --> L4
+  C --> L4
+  L4 -->|"curl 일치"| L7
+  L4 -->|"python3 불일치"| D4
+  L7 -->|"GET"| OK
+  L7 -->|"POST"| D7

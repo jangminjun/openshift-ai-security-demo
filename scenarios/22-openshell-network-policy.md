@@ -9,6 +9,13 @@
 - 접근 수준 `read-only`는 L7(HTTP 메서드) 수준에서 GET 등 읽기 요청만 통과시킨다.
 - 네트워크 정책은 실행 중인 샌드박스에 즉시 반영된다. 에이전트 프로세스와 Pod는 재시작되지 않는다.
 
+![네트워크 정책 승인과 요청별 판정](images/22/00-network-policy.png)
+
+| 판정 단계 | 기준 | 불일치 시 |
+|------|------|------|
+| L4 | 목적지 호스트·포트와 연결을 연 실행 파일(`binaries`) | 연결 거부 (DNS·TCP) |
+| L7 | HTTP 메서드·경로 (`access: read-only`는 GET·HEAD·OPTIONS) | HTTP 403과 거부 사유 JSON |
+
 ## 사전 준비
 
 - OpenShell 게이트웨이가 설치되어 있어야 한다. 설치 절차는 [시나리오 20. OpenShell 환경 설정](20-openshell-setup.md)을 따른다.
@@ -53,11 +60,60 @@ openshell sandbox exec -n sb-net -- python3 -c "import urllib.request;print(urll
 
 ## 결과 확인
 
+시연 절차의 출력은 다음과 같다.
+
 ```
-openshell policy list sb-net
-openshell logs sb-net --since 10m | grep OCSF
-oc get pod default--sb-net -n openshell -o jsonpath='{.status.containerStatuses[0].restartCount} {.status.startTime}{"\n"}'
+# 1) 승인 전
+$ openshell sandbox exec -n sb-net -- curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://api.github.com/zen
+curl: (7) Couldn't connect to server
+HTTP 000
+$ oc get pod default--sb-net -n openshell -o jsonpath='{.status.containerStatuses[0].restartCount} {.status.startTime}{"\n"}'
+0 2026-11-24T02:16:00Z
+
+# 2) 정책 승인
+$ openshell policy update sb-net --rule-name github_readonly --binary /usr/bin/curl \
+    --add-endpoint api.github.com:443:read-only:rest:enforce --wait
+✓ Policy version 2 submitted (hash: 31b4e78de941)
+✓ Policy version 2 loaded (active version: 2)
+
+# 3-a) curl GET
+Non-blocking is better than blocking.
+HTTP 200
+
+# 3-b) curl POST
+{"error":"policy_denied","policy":"github_readonly","rule":"POST /user/repos",
+ "detail":"POST /user/repos not permitted by policy","layer":"l7","protocol":"rest",
+ "method":"POST","path":"/user/repos","host":"api.github.com","port":443,
+ "binary":"/usr/bin/curl","rule_missing":{"type":"rest_allow","layer":"l7",...},"next_steps":[]}
+HTTP 403
+
+# 3-c) python3 GET
+urllib.error.URLError: <urlopen error [Errno 13] Permission denied>
 ```
+
+정책 이력, 로그, Pod 상태는 다음과 같다.
+
+```
+$ openshell policy list sb-net
+VERSION  HASH           STATUS       CREATED
+2        31b4e78de941   Loaded       1795486581878
+1        1caaf20d13ff   Superseded   1795486556941
+
+$ openshell logs sb-net --since 10m | grep OCSF | grep -E 'NET:OPEN|HTTP:|CONFIG:LOADED'
+CONFIG:LOADED [INFO] Acknowledged initial policy revision as loaded [version:1]
+NET:OPEN [MED] DENIED /usr/bin/curl(0) -> api.github.com:443 [reason:transparent_tcp_policy_denied]
+CONFIG:LOADED [INFO] Policy reloaded successfully [policy_hash:31b4e78de941...]
+NET:OPEN [INFO] ALLOWED /usr/bin/curl(0) -> api.github.com:443 [policy:github_readonly engine:opa]
+HTTP:GET [INFO] ALLOWED GET https://api.github.com/zen [policy:github_readonly engine:l7]
+NET:OPEN [INFO] ALLOWED /usr/bin/curl(0) -> api.github.com:443 [policy:github_readonly engine:opa]
+HTTP:POST [MED] DENIED POST https://api.github.com/user/repos [policy:github_readonly engine:l7] [reason:L7_REQUEST deny ...]
+NET:OPEN [MED] DENIED /usr/bin/python3.12(0) -> api.github.com:443 [reason:transparent_tcp_policy_denied]
+
+$ oc get pod default--sb-net -n openshell -o jsonpath='{.status.containerStatuses[0].restartCount} {.status.startTime}{"\n"}'
+0 2026-11-24T02:16:00Z
+```
+
+로그 줄 앞의 `[타임스탬프] [sandbox] [OCSF ] [ocsf]`는 생략했다.
 
 | 요청 | 검증 결과 |
 |------|------|
@@ -67,14 +123,6 @@ oc get pod default--sb-net -n openshell -o jsonpath='{.status.containerStatuses[
 | 승인 후 curl POST | HTTP 403, `HTTP:POST [MED] DENIED ... [engine:l7]` |
 | 승인 후 python3 GET | `[Errno 13] Permission denied`, `DENIED /usr/bin/python3.12(0) -> api.github.com:443` |
 | Pod `restartCount`, `startTime` | 승인 전후 동일 (0, 같은 시각) |
-
-POST 거부 시 프록시가 돌려준 본문은 다음과 같다(일부).
-
-```
-{"error":"policy_denied","policy":"github_readonly","rule":"POST /user/repos",
- "detail":"POST /user/repos not permitted by policy","layer":"l7",
- "binary":"/usr/bin/curl","rule_missing":{"type":"rest_allow","method":"POST",...}}
-```
 
 ## 정리
 

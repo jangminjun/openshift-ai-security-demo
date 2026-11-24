@@ -9,6 +9,8 @@
 - 에이전트는 root가 아닌 사용자로 실행되며, 모든 Linux capability가 제거된다. OpenShift에서는 네임스페이스의 UID 범위가 실행 사용자를 결정한다.
 - 파일시스템·Landlock·프로세스 정책은 샌드박스 시작 시점에 고정된다. 실행 중 정책을 바꿔도 실제 적용 범위는 넓어지지 않는다.
 
+![파일시스템·프로세스 격리](images/24/00-filesystem-process.png)
+
 ## 사전 준비
 
 - OpenShell 게이트웨이가 설치되어 있어야 한다. 설치 절차는 [시나리오 20. OpenShell 환경 설정](20-openshell-setup.md)을 따른다.
@@ -52,11 +54,65 @@ openshell sandbox exec -n sb-fs -- sh -c 'echo x > /etc/demo.conf && echo WROTE'
 
 ## 결과 확인
 
+시연 절차 1)과 2)의 출력은 다음과 같다(각 명령은 `openshell sandbox exec -n sb-fs -- sh -c '<명령>'`으로 실행).
+
 ```
-openshell policy list sb-fs
-openshell logs sb-fs --since 10m | grep -E 'CONFIG'
-oc get pod default--sb-fs -n openshell -o jsonpath='automount={.spec.automountServiceAccountToken}{"\n"}'
-oc get ns openshell -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.uid-range}{"\n"}'
+$ id
+uid=1001020000(1001020000) gid=1001020000(1001020000) groups=1001020000(1001020000)
+$ echo ok > /sandbox/a.txt && cat /sandbox/a.txt
+ok
+$ echo x > /etc/demo.conf
+sh: line 1: /etc/demo.conf: Permission denied
+$ cat /proc/1/environ
+cat: /proc/1/environ: Permission denied
+$ ls /root /var/lib
+ls: cannot open directory '/root': Permission denied
+ls: cannot open directory '/var/lib': Permission denied
+$ ls /var/run/secrets/kubernetes.io/serviceaccount
+ls: cannot access '/var/run/secrets/kubernetes.io/serviceaccount': No such file or directory
+```
+
+시연 절차 3)의 출력은 다음과 같다. 정책은 바뀐 것으로 표시되지만 `/etc` 쓰기는 계속 거부된다.
+
+```
+$ openshell policy set sb-fs --policy /tmp/policy-fs-wide.yaml --wait
+✓ Policy version 2 submitted (hash: b1004d725c91)
+✓ Policy version 2 loaded (active version: 2)
+
+$ openshell policy get sb-fs --full
+Version:      2
+Hash:         b1004d725c91de0358e62f02c3137246af35779703563478bbfed0022b28923f
+Status:       Effective
+Source:       sandbox
+  ...
+  read_write:
+    - /sandbox
+    - /tmp
+    - /dev/null
+    - /etc
+
+$ openshell sandbox exec -n sb-fs -- sh -c 'echo x > /etc/demo.conf && echo WROTE'
+sh: line 1: /etc/demo.conf: Permission denied
+```
+
+정책 이력, 로그, OpenShift 리소스 확인 결과는 다음과 같다.
+
+```
+$ openshell policy list sb-fs
+VERSION  HASH           STATUS       CREATED
+2        b1004d725c91   Loaded       1795486856602
+1        a07be95771a6   Superseded   1795486831211
+
+$ openshell logs sb-fs --since 10m | grep -E 'CONFIG:(LOADED|DETECTED)'
+CONFIG:LOADED [INFO] Acknowledged initial policy revision as loaded [version:1] [hash:a07be95771a6...]
+CONFIG:DETECTED [INFO] Settings poll: config change detected [... policy_changed:true ...]
+CONFIG:LOADED [INFO] Policy reloaded successfully [policy_hash:b1004d725c91...]
+
+$ oc get pod default--sb-fs -n openshell -o jsonpath='automount={.spec.automountServiceAccountToken}{"\n"}'
+automount=false
+
+$ oc get ns openshell -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.uid-range}{"\n"}'
+1001020000/10000
 ```
 
 | 확인 항목 | 검증 결과 |

@@ -9,6 +9,15 @@
 - 샌드박스 안의 환경 변수에는 실제 값 대신 `openshell:resolve:env:<ID>_<KEY>` 형식의 자리표시자가 들어간다.
 - 프록시는 프로필이 승인한 엔드포인트로 나가는 요청에서만 자리표시자를 실제 값으로 바꾼다. 승인되지 않은 곳으로 자리표시자를 헤더에 실어 보내면 요청을 거부하고 높은 심각도의 탐지 이벤트를 남긴다.
 
+![자격 증명 격리 흐름](images/23/00-credential-isolation.png)
+
+| 위치 | 보이는 값 |
+|------|------|
+| 게이트웨이 | 실제 토큰 (KEK로 암호화 저장) |
+| 샌드박스 환경 변수, Pod 정의 | 자리표시자만 (Pod `env`에는 토큰 변수 없음) |
+| 승인된 엔드포인트(`api.github.com`) | 실제 토큰 (프록시가 Bearer 헤더에 주입) |
+| 그 밖의 목적지 | 자리표시자만, 인증 헤더에 실으면 차단 |
+
 ## 사전 준비
 
 - OpenShell 게이트웨이가 설치되어 있어야 한다. 설치 절차는 [시나리오 20. OpenShell 환경 설정](20-openshell-setup.md)을 따른다.
@@ -59,15 +68,62 @@ openshell sandbox exec -n sb-cred -- sh -c 'curl -sS -w "\nHTTP %{http_code}\n" 
 
 ## 결과 확인
 
+시연 절차의 출력은 다음과 같다.
+
 ```
-openshell logs sb-cred --since 10m | grep OCSF
-oc get pod default--sb-cred -n openshell -o json | jq -r '.spec.containers[].env[]?.name'
-oc get secrets -n openshell
+$ openshell provider list
+NAME           TYPE          CREDENTIAL_KEYS   CONFIG_KEYS
+demo-github    github-demo   1                 0
+
+# 2) 샌드박스 안의 토큰
+GITHUB_TOKEN=openshell:resolve:env:v2647627522249102211_GITHUB_TOKEN
+
+# 3) 승인된 목적지 (가짜 토큰이므로 GitHub가 401 반환)
+{
+  "message": "Bad credentials",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
+HTTP 401
+
+# 4-a) 본문 유출: httpbin.org가 받은 값
+{
+  "form": { "token": "openshell:resolve:env:v2647627522249102211_GITHUB_TOKEN" },
+  "headers": { "Authorization": null }
+}
+
+# 4-b) 헤더 유출
+{"error":"credential_endpoint_mismatch","message":"Credential is not authorized for this request endpoint"}
+HTTP 403
+```
+
+로그와 OpenShift 리소스 확인 결과는 다음과 같다.
+
+```
+$ openshell logs sb-cred --since 10m | grep OCSF | grep -E 'NET:OPEN .*ALLOWED|HTTP:|FINDING'
+NET:OPEN [INFO] ALLOWED /usr/bin/curl(0) -> api.github.com:443 [policy:_provider_demo_github engine:opa]
+HTTP:GET [INFO] ALLOWED GET https://api.github.com/user [policy:_provider_demo_github engine:l7]
+NET:OPEN [INFO] ALLOWED /usr/bin/curl(0) -> httpbin.org:443 [policy:exfil_target engine:opa]
+HTTP:POST [INFO] ALLOWED POST https://httpbin.org/post [policy:exfil_target engine:l7]
+NET:OPEN [INFO] ALLOWED /usr/bin/curl(0) -> httpbin.org:443 [policy:exfil_target engine:opa]
+HTTP:GET [INFO] ALLOWED GET https://httpbin.org/headers [policy:exfil_target engine:l7]
+HTTP:GET [HIGH] DENIED GET  [policy:exfil_target engine:credential-binding] [reason:credential_endpoint_mismatch]
+FINDING:BLOCKED [HIGH] "Provider credential used at an unauthorized endpoint" [type:openshell.provider_credential.endpoint_mismatch]
+
+$ oc get pod default--sb-cred -n openshell -o json | jq -r '.spec.containers[].env[]?.name'
+OPENSHELL_TELEMETRY_ENABLED
+OPENSHELL_OCI_IMAGE_USER
+OPENSHELL_SANDBOX_UID
+OPENSHELL_SANDBOX_GID
+
+# 네임스페이스 Secret 중 토큰 원문(base64)을 포함한 것의 개수
+$ oc get secrets -n openshell -o json | jq -r '.items[] | select(.data|tostring|test("Z2hwX0RFTU8")) | .metadata.name' | wc -l
+0
 ```
 
 | 확인 항목 | 검증 결과 |
 |------|------|
-| 샌드박스 안 `$GITHUB_TOKEN` | `openshell:resolve:env:v15880783623099196136_GITHUB_TOKEN` |
+| 샌드박스 안 `$GITHUB_TOKEN` | `openshell:resolve:env:<샌드박스별 ID>_GITHUB_TOKEN` |
 | `api.github.com` 호출 | `ALLOWED ... [policy:_provider_demo_github]`, GitHub 응답 401(가짜 토큰) |
 | (a) 본문 유출 | 요청은 나갔으나 `httpbin.org`가 받은 값은 자리표시자뿐 |
 | (b) 헤더 유출 | HTTP 403 `credential_endpoint_mismatch`, `FINDING:BLOCKED [HIGH] "Provider credential used at an unauthorized endpoint"` |
