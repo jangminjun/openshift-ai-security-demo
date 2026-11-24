@@ -67,6 +67,8 @@ curl -sk -H "Authorization: Bearer $(oc whoami -t)" \
 | Compliance / Jailbreak Resistance | 탈옥 | 0.05 | 0.075 |
 | Composite Vulnerability Summary | 전체 합산 | 0.05 | **0.95** |
 
+SNO 클러스터(RHOAI 3.5.3)에서 재검증한 결과, 카탈로그 모델 수(133개), 점수가 있는 모델 수(25개), 위 표의 모든 값이 동일했다. 점수는 카탈로그 데이터로 제공되므로 클러스터 형태와 무관하다.
+
 garak 프로바이더의 해석 기준은 0.0~0.1 우수, 0.1~0.3 양호, 0.3~0.6 우려, 0.6~1.0 심각이다.
 
 ## Summary

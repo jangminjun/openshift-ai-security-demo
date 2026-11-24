@@ -129,6 +129,23 @@ cp local.env.example local.env   # OCP_API_URL / OCP_USER / OCP_PASSWORD 입력 
 ./harness.sh scenario5-stop                      # 정리, GPU 반환
 ```
 
+### SNO(Single Node OpenShift) 클러스터
+
+harness는 `oc get infrastructure cluster -o jsonpath='{.status.controlPlaneTopology}'`의 값이 `SingleReplica`이면 클러스터를 SNO로 판단한다. SNO 노드에는 대개 GPU가 1개뿐이므로, 다른 모델이 GPU를 점유하면 시나리오 5, 7~11의 대상 모델은 `Pending` 상태에 머문다. 이를 막기 위해 `scenario5-prep`은 SNO에서 GPU가 비어 있는지 먼저 확인하고, 비어 있지 않으면 중단한다.
+
+```bash
+./harness.sh gpu-status       # GPU 점유 Pod 확인 (oc get pods -A 기준)
+./harness.sh gpu-release      # 점유 중인 InferenceService 중지 (serving.kserve.io/stop=true)
+./harness.sh scenario5-prep
+...
+./harness.sh scenario5-stop
+./harness.sh gpu-restore      # gpu-release로 중지한 InferenceService만 재시작
+```
+
+SNO 노드의 기본 Pod 한도는 250개이다. RHOAI 전체 기능과 레드티밍 시나리오를 함께 운용하면 이 한도를 초과하므로, 사용자는 `./harness.sh sno-maxpods`로 한도를 500개(`SNO_MAX_PODS`)로 높인다. 이 명령은 `KubeletConfig`를 master pool에 적용하며, 노드가 재부팅되어 약 10~15분간 클러스터에 접속할 수 없다. 적용 결과는 `oc get node -o jsonpath='{.items[0].status.allocatable.pods}'`로 확인한다.
+
+`SNO_RELEASE_GPU=true`로 실행하면 `scenario5-prep`이 GPU를 직접 해제한다. 판정은 `CLUSTER_TOPOLOGY=sno|multi`로 강제할 수 있다.
+
 ### 명령 목록
 
 | 명령 | 하는 일 |
@@ -137,6 +154,8 @@ cp local.env.example local.env   # OCP_API_URL / OCP_USER / OCP_PASSWORD 입력 
 | `check` | 로그인, RHOAI 버전, DSC Ready, `roleManagement`/`projectRBAC` 플래그, `oauthProxy` 필드 점검 |
 | `prep-all` / `stop-all` | 시나리오 1~3의 prep / stop 일괄 실행 |
 | `destroy-project` | 데모 프로젝트 삭제 |
+| `sno-maxpods [n]` | SNO 노드의 Pod 한도 상향 (기본 500, 노드 재부팅) |
+| `gpu-status` / `gpu-release` / `gpu-restore` | GPU 점유 현황 / 레드티밍 프로젝트 밖의 GPU 점유 InferenceService 중지 / 중지한 InferenceService 재시작 (SNO용) |
 | `scenario1-prep` / `-bind` / `-verify` / `-stop` | 프로젝트 생성 / 일반 사용자에게 역할 부여 / 사용자별 권한 표 출력 / Role·RoleBinding 삭제 |
 | `scenario2-prep` / `-verify` / `-stop` | 프로젝트 + 더미 Secret 생성 / 워크벤치의 Secret 참조 확인 / 워크벤치·Secret 삭제 |
 | `scenario3-prep` / `-apply` / `-verify` / `-stop` | 변경 전 상태 확인 / DSC 패치 / 적용 확인 / 원복 |
@@ -159,7 +178,7 @@ cp local.env.example local.env   # OCP_API_URL / OCP_USER / OCP_PASSWORD 입력 
 
 ## 확인 상태
 
-RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다.
+RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다. 시나리오 4, 5, 7은 SNO 클러스터(RHOAI 3.5.3 / OpenShift 4.20.46, NVIDIA L4 1장)에서도 재확인했습니다.
 
 | 시나리오 | 상태 |
 |----------|------|
@@ -169,7 +188,7 @@ RHOAI 3.5.1 / OpenShift 4.22.16 기준입니다.
 | 4 | 확인됨 — 카탈로그 화면의 Safety and security insights 탭, API 값과 일치 |
 | 5 | 확인됨 — 파이프라인 실행 화면, 자동 주입, 리포트. 폐쇄망 동작과 Dashboard에서의 제출은 확인하지 않음 |
 | 6 | 확인됨 — Safety and security insights 탭의 카테고리별 점수, API 값과 일치 |
-| 7 | 확인됨 — 후보 2개(Qwen 1.5B, Granite 8B) 2회씩 점검·비교, Pipelines 화면과 리포트 |
+| 7 | 확인됨 — 후보 2개(Qwen 1.5B, Granite 8B) 3회씩 점검·비교(3차는 SNO), Pipelines 화면과 리포트 |
 | 8 | 확인됨 — 프로필 3종 점검, 실제 응답으로 오탐 확인 |
 | 9 | 확인됨 — 가드레일 구성, 차단 동작, 가드레일 경유 점검 2회(재현), 리포트 |
 | 10 | 확인됨 — MLflow 기록, CronJob 제출, 이력 조회, Dashboard의 Experiments·Evaluations 화면 |

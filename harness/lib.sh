@@ -74,10 +74,27 @@ evalhub_api() {
     -H "Content-Type: application/json" ${body:+-d "$body"} "https://${host}/api/v1/evaluations${path}"
 }
 
+predictor_url() {
+  # predictor_url -- in-cluster OpenAI base URL of the target model. RHOAI
+  # 3.5.3 renders KServe with serviceClusterIPNone=true, so the predictor
+  # Service is headless: DNS returns the pod IP and the Service's port 80
+  # mapping never applies; only the container port (targetPort) answers.
+  # With a regular ClusterIP Service, port 80 is used as before.
+  local svc="${REDTEAM_MODEL}-predictor" port=""
+  if [ "$(oc get svc "$svc" -n "$REDTEAM_NAMESPACE" -o jsonpath='{.spec.clusterIP}' 2>/dev/null)" = "None" ]; then
+    port=":$(oc get svc "$svc" -n "$REDTEAM_NAMESPACE" -o jsonpath='{.spec.ports[0].targetPort}')"
+  fi
+  printf 'http://%s.%s.svc.cluster.local%s/v1' "$svc" "$REDTEAM_NAMESPACE" "$port"
+}
+
 redteam_model_url() {
   # REDTEAM_TARGET_URL points scans at something in front of the model
   # instead, e.g. the guardrails gateway in scenario 9.
-  printf '%s' "${REDTEAM_TARGET_URL:-http://${REDTEAM_MODEL}-predictor.${REDTEAM_NAMESPACE}.svc.cluster.local/v1}"
+  if [ -n "${REDTEAM_TARGET_URL:-}" ]; then
+    printf '%s' "$REDTEAM_TARGET_URL"
+  else
+    predictor_url
+  fi
 }
 
 guardrails_url() {
@@ -101,6 +118,42 @@ wait_until() {
     sleep "$pause"
   done
   err "Timed out waiting for ${what}."
+}
+
+cluster_topology() {
+  # SingleReplica = Single Node OpenShift; HighlyAvailable = multi-node.
+  oc get infrastructure cluster -o jsonpath='{.status.controlPlaneTopology}'
+}
+
+is_sno() {
+  case "$CLUSTER_TOPOLOGY" in
+    sno)   return 0 ;;
+    multi) return 1 ;;
+  esac
+  [ "$(cluster_topology)" = "SingleReplica" ]
+}
+
+gpu_total() {
+  oc get nodes -o json | jq '[.items[].status.allocatable["nvidia.com/gpu"] // "0" | tonumber] | add // 0'
+}
+
+gpu_holders() {
+  # gpu_holders [namespace-to-skip] -- one line per scheduled pod holding a
+  # GPU: namespace, pod, GPU count, owning InferenceService (or "-").
+  oc get pods -A -o json | jq -r --arg skip "${1:-}" '.items[]
+    | select(.spec.nodeName != null and .status.phase != "Succeeded" and .status.phase != "Failed")
+    | select(.metadata.namespace != $skip)
+    | {ns: .metadata.namespace, pod: .metadata.name,
+       gpu: ([.spec.containers[].resources.limits["nvidia.com/gpu"] // "0" | tonumber] | add),
+       isvc: (.metadata.labels["serving.kserve.io/inferenceservice"] // "-")}
+    | select(.gpu > 0) | "\(.ns)\t\(.pod)\t\(.gpu)\t\(.isvc)"' | tr -d '\r'
+}
+
+gpu_free() {
+  # gpu_free [namespace-to-skip] -- GPUs not held by pods outside that namespace.
+  local used
+  used="$(gpu_holders "${1:-}" | awk -F'\t' '{s += $3} END {print s + 0}')"
+  echo $(( $(gpu_total) - used ))
 }
 
 oauth_proxy_config() {

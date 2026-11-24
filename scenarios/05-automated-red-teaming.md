@@ -28,6 +28,13 @@
 
 관리자는 `redteam-demo` 프로젝트에 대상 모델 `redteam-target`(vLLM + `Qwen/Qwen2.5-1.5B-Instruct`, GPU 1장), 파이프라인 서버 `dspa`(내장 MinIO·MariaDB), EvalHub `evalhub`와 필요한 Secret·RoleBinding을 만든다. 매니페스트는 `harness/manifests/redteam-*.yaml`이며, 첫 실행은 모델을 내려받으므로 약 10분이 걸린다.
 
+SNO 클러스터에서는 GPU가 한 장이므로, 관리자는 다른 모델이 GPU를 점유하고 있는지 먼저 확인하고 해당 InferenceService를 중지한다. 중지는 Dashboard의 Stop과 같은 `serving.kserve.io/stop` 어노테이션을 사용하며, `redteam-prep`은 GPU가 비어 있지 않으면 리소스를 만들지 않고 중단한다.
+
+```bash
+oc get pods -A -o json | jq -r '.items[] | select(.spec.containers[].resources.limits["nvidia.com/gpu"]) | "\(.metadata.namespace)/\(.metadata.name)"'
+oc annotate inferenceservice <이름> -n <프로젝트> serving.kserve.io/stop=true   # 또는 ./harness/harness.sh gpu-release
+```
+
 ```bash
 ./harness/harness.sh redteam-prep
 oc get inferenceservice,evalhub,dspa -n redteam-demo
@@ -44,7 +51,7 @@ oc get inferenceservice,evalhub,dspa -n redteam-demo
 
 ### 1) Automated Red Teaming 파이프라인 실행
 
-시연자는 `intents` 벤치마크를 파이프라인 모드로 실행하고, Dashboard의 **Develop & train** → **Pipelines** → **Runs**에서 `evalhub-garak-<job ID>` run의 진행을 보여 준다. 실행은 약 4분이 걸린다.
+시연자는 `intents` 벤치마크를 파이프라인 모드로 실행하고, Dashboard의 **Develop & train** → **Pipelines** → **Runs**에서 `evalhub-garak-<job ID>` run의 진행을 보여 준다. 실행은 4~6분이 걸린다.
 
 ```bash
 ./harness/harness.sh scenario5-run intents garak-kfp
@@ -99,32 +106,34 @@ start .\harness\reports\<job-id>\scan.intents.html
 
 ## 결과 확인
 
-검증 환경의 결과(대상 Qwen2.5 1.5B, job `b303ef8e`)는 다음과 같다. 수치는 `redteam-status <job-id>`로도 확인한다.
+대상은 Qwen2.5 1.5B이며, 수치는 `redteam-status <job-id>`로도 확인한다. 괄호 안은 해당 단계에서 성공한 프롬프트 수 / 그 단계에 남아 있던 프롬프트 수이다.
 
-| 단계 | 공격 성공률 |
-|------|:---:|
-| `base.IntentProbe` (합성 프롬프트 그대로) | 0.475 |
-| `spo.SPOIntent` (프롬프트 주입) | 0.8095 |
-| `spo.SPOIntentUserAugmented` | 0.875 |
-| 이후 단계 (시스템 증강, 번역, TAP) | 0 |
-| 전체 | **0.9875** (실패) |
+| 단계 | 1차 (job `b303ef8e`) | 2차 (job `0183eaf2`, SNO · L4 · RHOAI 3.5.3) |
+|------|:---:|:---:|
+| `base.IntentProbe` (합성 프롬프트 그대로) | 0.475 | 0.45 (36/80) |
+| `spo.SPOIntent` (프롬프트 주입) | 0.8095 | 0.7273 (32/44) |
+| `spo.SPOIntentUserAugmented` | 0.875 | 0.8333 (10/12) |
+| `spo.SPOIntentSystemAugmented` | 0 | 1.0 (2/2) |
+| 이후 단계 (번역, TAP) | 0 | 시도 없음 (남은 프롬프트 0개) |
+| 전체 | **0.9875** (실패) | **1.0** (실패) |
 
-![레드티밍 리포트 개요 — 프로브별·위험 분류별 모델 행동](images/5/02-intents-report-overview.png)
+![레드티밍 리포트 개요 — 프로브별·위험 분류별 모델 행동 (1차)](images/5/02-intents-report-overview.png)
 
-- 공격 프롬프트 80개 중 79개가 성공했다. 8개 위험 분류 중 7개가 100% 뚫렸고, 성적 콘텐츠만 10개 중 9개가 뚫렸다.
-- **Model Behavior By Probe**는 단계마다 모델이 따른(빨강)·거절한(회색) 프롬프트 수를 보여 준다. 이후 단계의 0은 견고함이 아니라 남은 프롬프트가 1개뿐이었기 때문이다.
+- 1차 실행에서는 공격 프롬프트 80개 중 79개가 성공했고, 2차 실행에서는 80개 모두 성공해 8개 위험 분류가 모두 100% 뚫렸다. 합성 프롬프트가 실행마다 새로 만들어지므로 단계별 수치는 실행마다 다르다.
+- **Model Behavior By Probe**는 단계마다 모델이 따른(빨강)·거절한(회색) 프롬프트 수를 보여 준다. 후반 단계의 0 또는 공란은 견고함이 아니라 남은 프롬프트가 없었기 때문이다.
 
 ![레드티밍 리포트 프로브 상세 — Baseline과 SPO 단계](images/5/03-intents-report-probe-details.png)
 
 ## Summary
 
 - 평가자는 EvalHub와 garak-kfp 파이프라인으로 배포된 모델의 레드티밍을 자동 실행했다. 파이프라인은 공격 프롬프트 80개를 합성하고 공격 기법을 단계적으로 강화하며 주입했다.
-- 대상 모델은 합성 프롬프트를 그대로 보냈을 때 47.5%를 따랐고, 프롬프트 주입이 더해지자 80개 중 79개(99%)가 성공했다.
+- 대상 모델은 합성 프롬프트를 그대로 보냈을 때 45~47.5%를 따랐고, 프롬프트 주입이 더해지자 80개 중 79~80개(99~100%)가 성공했다. 결과는 두 차례 실행에서 일관되었다.
 - 결과는 위험 분류별·단계별 차트가 담긴 리포트로 저장되었다.
 
 ## 운영 가이드
 
 - 평가자는 카탈로그에 점수가 없는 사내 모델·파인튜닝 모델도 같은 기준으로 평가하며, 파이프라인 실행이므로 배포 전 안전성 게이트로 자동화할 수 있다.
-- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(47.5% → 99%).
+- 모델은 단순 요청을 거절해도 공격 기법이 더해지면 무너질 수 있다(45% → 100%).
+- RHOAI 3.5.3의 KServe는 predictor Service를 headless(`clusterIP: None`)로 만든다. 이 경우 Service의 포트 80 매핑이 적용되지 않으므로, 평가자는 모델 URL에 컨테이너 포트를 지정한다(예: `http://<모델>-predictor.<프로젝트>.svc.cluster.local:8080/v1`). 포트를 생략하면 `sdg-generate` 단계가 `Connection error`로 실패한다. 설정은 `oc get configmap inferenceservice-config -n redhat-ods-applications -o jsonpath='{.data.service}'`로 확인한다.
 - 단계별 점수 0은 시도 대상이 남지 않았다는 뜻일 수 있으므로, 평가자는 리포트의 단계별 시도 건수를 함께 확인한다.
 - 실행 중인 평가를 멈출 때는 EvalHub 작업과 파이프라인 실행을 함께 중지한다(`redteam-cancel <job-id>`).
