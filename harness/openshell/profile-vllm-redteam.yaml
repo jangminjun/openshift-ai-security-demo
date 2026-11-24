@@ -1,0 +1,17 @@
+# 사내 KServe(vLLM) 모델을 OpenShell 프로바이더로 등록하는 프로필
+# 엔드포인트는 RHOAI 3.5.3 headless predictor Service의 컨테이너 포트(8080)를 사용한다.
+id: vllm-redteam
+display_name: vLLM (redteam-target)
+description: OpenAI-compatible KServe vLLM endpoint in redteam-demo
+category: inference
+inference_capable: true
+credentials: []
+endpoints:
+  - host: redteam-target-predictor.redteam-demo.svc.cluster.local
+    port: 8080
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+binaries:
+  - /usr/bin/python3*
+  - /usr/bin/curl

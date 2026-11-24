@@ -1,0 +1,17 @@
+# 유출 대상(httpbin.org)을 audit 모드로 허용: 연결은 통과하고 로그만 남김 (적용 전 상태 재현용)
+version: 1
+filesystem_policy:
+  include_workdir: true
+  read_only: [/bin, /usr, /lib, /lib64, /etc, /opt, /proc, /dev/urandom]
+  read_write: [/sandbox, /tmp, /dev/null]
+network_policies:
+  exfil_target:
+    name: exfil target (audit only)
+    endpoints:
+      - host: httpbin.org
+        port: 443
+        protocol: rest
+        access: full
+        enforcement: audit
+    binaries:
+      - path: /usr/bin/curl

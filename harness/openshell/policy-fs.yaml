@@ -1,0 +1,11 @@
+# 파일시스템·프로세스 격리 정책 (시작 시점에만 적용, 실행 중 변경 불가)
+version: 1
+filesystem_policy:
+  include_workdir: true
+  read_only: [/bin, /usr, /lib, /lib64, /etc, /opt, /proc, /dev/urandom]
+  read_write: [/sandbox, /tmp, /dev/null]
+landlock:
+  compatibility: hard_requirement
+process:
+  run_as_user: sandbox
+  run_as_group: sandbox

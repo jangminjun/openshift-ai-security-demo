@@ -1,0 +1,20 @@
+# GitHub 토큰 프로바이더 프로필 (upstream providers/github.yaml을 curl 기준으로 축소)
+# 토큰은 api.github.com으로 가는 curl 요청에만 Bearer 헤더로 주입된다.
+id: github-demo
+display_name: GitHub (demo)
+description: GitHub REST API read-only, curl only
+category: source_control
+credentials:
+  - name: api_token
+    description: GitHub token
+    env_vars: [GITHUB_TOKEN]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+endpoints:
+  - host: api.github.com
+    port: 443
+    protocol: rest
+    access: read-only
+    enforcement: enforce
+binaries: [/usr/bin/curl]

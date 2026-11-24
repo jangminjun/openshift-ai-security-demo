@@ -37,6 +37,19 @@ GA 기능(시나리오 1~6)만 따로 정리한 목록은 [rhoai-3.5-ga-features
 
 모든 기능의 지원 단계는 GA입니다.
 
+### 에이전트 보안: OpenShell (Developer Preview, SNO·OpenShell 0.1.9에서 검증)
+
+| # | 시나리오 | 무엇을 보여주나 | 시연 방식 | 문서 |
+|---|----------|-----------------|-----------|------|
+| 20 | 환경 설정 | Agent Sandbox operator와 OpenShell 게이트웨이 설치, CLI 연결 (21~25 공통) | CLI (`oc`, `helm`, `openshell`) | [20-openshell-setup.md](scenarios/20-openshell-setup.md) |
+| 21 | 기본 차단 | 에이전트를 샌드박스 Pod에 격리하고, 정책에 없는 외부 연결을 거부·기록 | CLI | [21-openshell-default-deny.md](scenarios/21-openshell-default-deny.md) |
+| 22 | 네트워크 정책 승인과 무중단 반영 | 호스트·메서드·바이너리 단위 허용, 재시작 없는 정책 반영 | CLI | [22-openshell-network-policy.md](scenarios/22-openshell-network-policy.md) |
+| 23 | 자격 증명 격리 | 토큰을 샌드박스 밖에 두고 승인된 목적지에만 주입 | CLI | [23-openshell-credential-isolation.md](scenarios/23-openshell-credential-isolation.md) |
+| 24 | 파일시스템·프로세스 격리 | Landlock 경로 제한, 비root 실행, 실행 중 권한 확대 거부 | CLI | [24-openshell-filesystem-process.md](scenarios/24-openshell-filesystem-process.md) |
+| 25 | 프롬프트 인젝션 유출 차단 | 사내 KServe 모델 에이전트가 주입 지시를 따라도 유출을 차단 (시나리오 5·7과 연계) | CLI + 로그 | [25-openshell-prompt-injection-exfiltration.md](scenarios/25-openshell-prompt-injection-exfiltration.md) |
+
+정책·프로필·데모 에이전트 파일은 [harness/openshell/](harness/openshell/)에 있습니다. 2026-11-24 SNO 클러스터(OpenShift 4.20.46)에서 OpenShell 0.1.9로 21~25번을 모두 실행해 확인했습니다.
+
 ## 기능별 핵심 내용
 
 ### 1. 커스텀 RBAC 역할 생성 UI

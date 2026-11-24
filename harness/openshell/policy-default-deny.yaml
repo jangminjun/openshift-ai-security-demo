@@ -1,0 +1,8 @@
+# 기본 차단 정책: 네트워크 규칙 없음 → 모든 외부 연결 거부
+version: 1
+filesystem_policy:
+  include_workdir: true
+  read_only: [/bin, /usr, /lib, /lib64, /etc, /opt, /proc, /dev/urandom]
+  read_write: [/sandbox, /tmp, /dev/null]
+landlock:
+  compatibility: hard_requirement
